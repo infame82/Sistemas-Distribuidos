@@ -1,0 +1,14 @@
+
+*.prefs
+
+WeatherMonitorSimulator/.classpath
+
+WeatherMonitorSimulator/WeatherMonitorGUI/.classpath
+
+WeatherMonitorSimulator/WeatherMonitorModel/.classpath
+
+WeatherMonitorSimulator/WeatherMonitorGUI/.project
+
+WeatherMonitorSimulator/WeatherMonitorModel/.project
+
+WeatherMonitorSimulator/.project

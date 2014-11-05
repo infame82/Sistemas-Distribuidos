@@ -1,0 +1,10 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Simulation Model Test Suite" parallel="tests" thread-count="5">
+	<test name="Sensores">
+		<classes>
+			<class name="com.uag.sd.weathermonitor.model.sensor.TestSensor" />
+			<class name="com.uag.sd.weathermonitor.model.endpoint.TestEndpoint" />
+		</classes>
+	</test>
+</suite>
