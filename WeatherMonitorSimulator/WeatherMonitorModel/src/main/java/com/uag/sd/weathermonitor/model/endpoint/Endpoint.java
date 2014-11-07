@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.uag.sd.weathermonitor.model.logs.SensorLog;
+import com.uag.sd.weathermonitor.model.logs.DeviceLog;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 import com.uag.sd.weathermonitor.model.sensor.SensorData;
 import com.uag.sd.weathermonitor.model.sensor.SensorMonitor;
@@ -25,7 +25,8 @@ public class Endpoint implements SensorMonitor,Runnable,Traceable {
 	private Integer threadPoolSize;
 	private int coverage;
 	private Point location;
-	private SensorLog sensorLog;
+	private DeviceLog<SensorData> sensorLog;
+	private DeviceLog<EndpointData> endpointLog;
 	
 	public Endpoint() {
 		threadPoolSize = 50;
@@ -36,15 +37,19 @@ public class Endpoint implements SensorMonitor,Runnable,Traceable {
 		location = new Point();
 	}
 	
-	public Endpoint(String id,SensorLog sensorLog) {
+	public Endpoint(String id,DeviceLog<SensorData> sensorLog,DeviceLog<EndpointData> endpointLog) {
 		this();
 		this.id = id;
 		this.sensorLog = sensorLog;
+		this.endpointLog = endpointLog;
 	}
 	
 	@Override
 	public void run() {
 		active = true;
+		if(endpointLog!=null) {
+			endpointLog.debug(new EndpointData(id, "STARTED"));
+		}
 		start();
 		while(active) {
 			try {
@@ -52,6 +57,9 @@ public class Endpoint implements SensorMonitor,Runnable,Traceable {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+		}
+		if(endpointLog!=null) {
+			endpointLog.debug(new EndpointData(id, "STOPPED"));
 		}
 	}
 	
@@ -80,19 +88,34 @@ public class Endpoint implements SensorMonitor,Runnable,Traceable {
 	}
 
 	private void start() {
+		if(endpointLog!=null) {
+			endpointLog.debug(new EndpointData(id, "STARTING SENSORS..."));
+		}
+		int counter = 0;
 		for(Sensor sensor:sensors) {
-			startSensor(sensor);
+			if(startSensor(sensor)) {
+				counter++;
+			}
+		}
+		if(endpointLog!=null) {
+			endpointLog.debug(new EndpointData(id, counter+ " SENSORS STARTED"));
 		}
 	}
 	
-	public void startSensor(Sensor sensor) {
+	public boolean startSensor(Sensor sensor) {
+		
 		if(!sensor.isActive()) {
 			sensor.setActive(true);
 			executorService.execute(sensor);
+			return true;
 		}
+		return false;
 	}
 	
 	public void stop() {
+		if(endpointLog!=null) {
+			endpointLog.debug(new EndpointData(id, "STOPPING ENDPOINT..."));
+		}
 		for(Sensor sensor:sensors) {
 			stopSensor(sensor);
 		}
@@ -173,12 +196,20 @@ public class Endpoint implements SensorMonitor,Runnable,Traceable {
 		return endpoint.id.equals(id);
 	}
 
-	public SensorLog getSensorLog() {
+	public DeviceLog<SensorData> getSensorLog() {
 		return sensorLog;
 	}
 
-	public void setSensorLog(SensorLog sensorLog) {
+	public void setSensorLog(DeviceLog<SensorData> sensorLog) {
 		this.sensorLog = sensorLog;
+	}
+
+	public DeviceLog<EndpointData> getEndpointLog() {
+		return endpointLog;
+	}
+
+	public void setEndpointLog(DeviceLog<EndpointData> endpointLog) {
+		this.endpointLog = endpointLog;
 	}
 	
 	

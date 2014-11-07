@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/WeatherMonitorGUI/WeatherMonitorGUI.iml" filepath="$PROJECT_DIR$/WeatherMonitorGUI/WeatherMonitorGUI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WeatherMonitorModel/WeatherMonitorModel.iml" filepath="$PROJECT_DIR$/WeatherMonitorModel/WeatherMonitorModel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WeatherMonitorSimulator.iml" filepath="$PROJECT_DIR$/WeatherMonitorSimulator.iml" />
+    </modules>
+  </component>
+</project>
+

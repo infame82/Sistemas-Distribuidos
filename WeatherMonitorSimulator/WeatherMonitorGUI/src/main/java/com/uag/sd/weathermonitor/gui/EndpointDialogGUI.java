@@ -21,7 +21,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import com.uag.sd.weathermonitor.model.endpoint.Endpoint;
-import com.uag.sd.weathermonitor.model.logs.SensorLog;
+import com.uag.sd.weathermonitor.model.logs.DeviceLog;
+import com.uag.sd.weathermonitor.model.sensor.SensorData;
 
 public class EndpointDialogGUI extends JDialog {
 
@@ -37,8 +38,7 @@ public class EndpointDialogGUI extends JDialog {
 	private JCheckBox activeBox;
 	private Endpoint endpoint;
 	private EndpointTableModel tableModel;
-	private EndpointRefresher endpointRefresher;
-	private SensorLog sensorLog;
+	private DeviceLog<SensorData> sensorLog;
 
 	/**
 	 * Launch the application.
@@ -52,11 +52,10 @@ public class EndpointDialogGUI extends JDialog {
 		}
 	}
 
-	public EndpointDialogGUI(Endpoint endpoint,EndpointTableModel tableModel,EndpointRefresher endpointRefresher,SensorLog sensorLog) {
+	public EndpointDialogGUI(Endpoint endpoint,EndpointTableModel tableModel,DeviceLog<SensorData> sensorLog) {
 		this();
 		this.endpoint = endpoint;
 		this.tableModel = tableModel;
-		this.endpointRefresher = endpointRefresher;
 		this.sensorLog = sensorLog;
 		if(endpoint!=null) {
 			idField.setText(endpoint.getId());
@@ -254,7 +253,6 @@ public class EndpointDialogGUI extends JDialog {
 							}
 							int rowIndex = tableModel.getIndexOf(endpoint);
 							tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
-							endpointRefresher.refreshEndpointDetails(endpoint);
 						}
 						EndpointDialogGUI.this.dispose();
 					}

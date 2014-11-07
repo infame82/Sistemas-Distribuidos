@@ -1,9 +1,7 @@
 package com.uag.sd.weathermonitor.model.sensor;
 
-import bsh.This;
-
 import com.uag.sd.weathermonitor.model.endpoint.Endpoint;
-import com.uag.sd.weathermonitor.model.logs.SensorLog;
+import com.uag.sd.weathermonitor.model.logs.DeviceLog;
 
 public abstract class Sensor implements Runnable{
 
@@ -13,7 +11,7 @@ public abstract class Sensor implements Runnable{
 	protected SensorMonitor monitor;
 	protected String value;
 	protected Endpoint parent;
-	protected SensorLog log;
+	protected DeviceLog<SensorData> log;
 	
 	//In milliseconds, 5000 = 5 sec
 	public static final long DEFAULT_LAPSE = 5000;
@@ -40,7 +38,7 @@ public abstract class Sensor implements Runnable{
 	public void run() {
 		active = true;
 		if(log!=null) {
-			log.debug(id, "STARTED");
+			log.debug(new SensorData(id, "STARTED"));
 		}
 		while (active) {
 			if(monitor!=null) {
@@ -53,13 +51,13 @@ public abstract class Sensor implements Runnable{
 			}
 		}
 		if(log!=null) {
-			log.debug(id,"STOPPED");
+			log.debug(new SensorData(id, "STOPPED"));
 		}
 	}
 	
 	public void stop() {
 		if(log!=null) {
-			log.debug(id, "STOPPING...");
+			log.debug(new SensorData(id, "STOPPING..."));
 		}
 		active = false;
 	}
@@ -78,7 +76,7 @@ public abstract class Sensor implements Runnable{
 	}
 	public void setLapse(long lapse) {
 		if(log!=null && lapse!=this.lapse) {
-			log.debug(id,"Lapse updated: "+lapse);
+			log.debug(new SensorData(id, "Lapse updated: "+lapse));
 		}
 		this.lapse = lapse;
 	}
@@ -101,16 +99,16 @@ public abstract class Sensor implements Runnable{
 	
 	public void setValue(String value) {
 		if(log!=null && !value.equals(this.value)) {
-			log.debug(id,"Value updated: "+value);
+			log.debug(new SensorData(id, "Value updated: "+value));
 		}
 		this.value = value;
 	}
 
-	public SensorLog getLog() {
+	public DeviceLog<SensorData> getLog() {
 		return log;
 	}
 
-	public void setLog(SensorLog log) {
+	public void setLog(DeviceLog<SensorData> log) {
 		this.log = log;
 	}
 	
