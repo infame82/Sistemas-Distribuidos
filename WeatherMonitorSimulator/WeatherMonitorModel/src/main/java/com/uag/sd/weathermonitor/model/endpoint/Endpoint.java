@@ -2,7 +2,9 @@ package com.uag.sd.weathermonitor.model.endpoint;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -10,6 +12,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.uag.sd.weathermonitor.model.logs.DeviceLog;
+import com.uag.sd.weathermonitor.model.router.Router;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 import com.uag.sd.weathermonitor.model.sensor.SensorData;
 import com.uag.sd.weathermonitor.model.sensor.SensorMonitor;
@@ -20,6 +23,7 @@ import com.uag.sd.weathermonitor.model.traceability.Traceable;
 public class Endpoint implements SensorMonitor,Runnable,Traceable {
 	private String id;
 	private List<Sensor> sensors;
+	private Map<String,Router> routers;
 	private boolean active;
 	private ThreadPoolExecutor executorService;
 	private Integer threadPoolSize;
@@ -32,6 +36,7 @@ public class Endpoint implements SensorMonitor,Runnable,Traceable {
 		threadPoolSize = 50;
 		executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadPoolSize);
 		sensors = new ArrayList<Sensor>();
+		routers = new LinkedHashMap<String, Router>();
 		active = false;
 		coverage = 5;
 		location = new Point();
@@ -211,7 +216,20 @@ public class Endpoint implements SensorMonitor,Runnable,Traceable {
 	public void setEndpointLog(DeviceLog<EndpointData> endpointLog) {
 		this.endpointLog = endpointLog;
 	}
+
+	public Map<String, Router> getRouters() {
+		return routers;
+	}
 	
+	public boolean addRouter(Router router) {
+		if(!routers.containsKey(router.getId())) {
+			routers.put(router.getId(), router);
+		}
+		return false;
+	}
 	
+	public void removeRouter(String id) {
+		routers.remove(id);
+	}
 
 }

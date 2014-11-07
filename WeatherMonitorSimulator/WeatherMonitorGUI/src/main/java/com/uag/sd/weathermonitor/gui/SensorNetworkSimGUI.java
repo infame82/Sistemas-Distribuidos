@@ -505,6 +505,9 @@ public class SensorNetworkSimGUI {
 																										sensorsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 																										scrollPane_1.setViewportView(sensorsTable);
 																										panel.setLayout(gl_panel);
+																										
+																										JPanel panel_4 = new JPanel();
+																										tabbedPane.addTab("Routers", null, panel_4, null);
 																										endPointsTable = new JTable(endpointTableModel);
 																										
 																										
@@ -524,6 +527,9 @@ public class SensorNetworkSimGUI {
 																													.addContainerGap()
 																													.addComponent(appTabbedPane, GroupLayout.DEFAULT_SIZE, 804, Short.MAX_VALUE))
 																										);
+																										
+																										JPanel panel_3 = new JPanel();
+																										appTabbedPane.addTab("Routers", null, panel_3, null);
 																										frmSensorNetworkSimulation.getContentPane().setLayout(groupLayout);
 		
 
