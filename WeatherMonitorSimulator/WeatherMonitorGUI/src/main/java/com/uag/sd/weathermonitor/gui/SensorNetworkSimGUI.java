@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 import com.uag.sd.weathermonitor.model.endpoint.Endpoint;
 import com.uag.sd.weathermonitor.model.endpoint.EndpointData;
 import com.uag.sd.weathermonitor.model.logs.DeviceLog;
+import com.uag.sd.weathermonitor.model.router.Router;
 import com.uag.sd.weathermonitor.model.sensor.HumiditySensor;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 import com.uag.sd.weathermonitor.model.sensor.SensorData;
@@ -102,6 +103,7 @@ public class SensorNetworkSimGUI {
 	private JTable sensorsTable;
 	private EndpointTableModel endpointTableModel;
 	private SensorTableModel sensorTableModel;
+	private EndpointRouterTableModel endpointRouterTableModel;
 	private JTextArea sensorInfoConsole;
 	private JTextArea sensorDebugConsole;
 	private JTextArea endpointInfoConsole;
@@ -109,6 +111,7 @@ public class SensorNetworkSimGUI {
 	private SimpleDateFormat dateFormatter;
 	private SensorLog sensorLog;
 	private EndpointLog endpointLog;
+	private JTable endpointRoutersTable;
 
 	/**
 	 * Create the application.
@@ -157,10 +160,11 @@ public class SensorNetworkSimGUI {
 		Endpoint e1 = new Endpoint("E1",sensorLog,endpointLog);
 		e1.addSensor(new TemperatureSensor("T1"));
 		e1.addSensor(new HumiditySensor("H1"));
+		e1.addRouter(new Router("R1",null));
 		
 		sensorTableModel = new SensorTableModel();
-
 		endpointTableModel = new EndpointTableModel();
+		endpointRouterTableModel = new EndpointRouterTableModel();
 		endpointTableModel.addEndpoint(e1);
 		endpointTableModel.addEndpoint(new Endpoint("E2",sensorLog,endpointLog));
 														
@@ -508,6 +512,27 @@ public class SensorNetworkSimGUI {
 																										
 																										JPanel panel_4 = new JPanel();
 																										tabbedPane.addTab("Routers", null, panel_4, null);
+																										
+																										JScrollPane scrollPane_6 = new JScrollPane();
+																										GroupLayout gl_panel_4 = new GroupLayout(panel_4);
+																										gl_panel_4.setHorizontalGroup(
+																											gl_panel_4.createParallelGroup(Alignment.LEADING)
+																												.addGroup(gl_panel_4.createSequentialGroup()
+																													.addContainerGap()
+																													.addComponent(scrollPane_6, GroupLayout.DEFAULT_SIZE, 553, Short.MAX_VALUE)
+																													.addContainerGap())
+																										);
+																										gl_panel_4.setVerticalGroup(
+																											gl_panel_4.createParallelGroup(Alignment.LEADING)
+																												.addGroup(gl_panel_4.createSequentialGroup()
+																													.addContainerGap()
+																													.addComponent(scrollPane_6, GroupLayout.PREFERRED_SIZE, 328, GroupLayout.PREFERRED_SIZE)
+																													.addContainerGap(14, Short.MAX_VALUE))
+																										);
+																										
+																										endpointRoutersTable = new JTable(endpointRouterTableModel);
+																										scrollPane_6.setViewportView(endpointRoutersTable);
+																										panel_4.setLayout(gl_panel_4);
 																										endPointsTable = new JTable(endpointTableModel);
 																										
 																										
@@ -540,6 +565,7 @@ public class SensorNetworkSimGUI {
 	        	}
 	            Endpoint endpoint = endpointTableModel.getEndpoint(endPointsTable.getSelectedRow());
 	            sensorTableModel.setEndpoint(endpoint);
+	            endpointRouterTableModel.setEndpoint(endpoint);
 	            editEndpointButton.setEnabled(true);
 	            removeEndpointButton.setEnabled(true);
 	            addSensorButton.setEnabled(true);
@@ -564,6 +590,7 @@ public class SensorNetworkSimGUI {
 				editEndpointButton.setEnabled(false);
 				addSensorButton.setEnabled(false);
 				sensorTableModel.clear();
+				endpointRouterTableModel.clear();
 			}
 		});
 		
@@ -584,8 +611,4 @@ public class SensorNetworkSimGUI {
 	public JFrame getFrame() {
 		return frmSensorNetworkSimulation;
 	}
-	
-	
-
-	
 }

@@ -23,7 +23,7 @@ import com.uag.sd.weathermonitor.model.traceability.Traceable;
 public class Endpoint implements SensorMonitor,Runnable,Traceable {
 	private String id;
 	private List<Sensor> sensors;
-	private Map<String,Router> routers;
+	private LinkedHashMap<String,Router> routers;
 	private boolean active;
 	private ThreadPoolExecutor executorService;
 	private Integer threadPoolSize;
@@ -217,7 +217,7 @@ public class Endpoint implements SensorMonitor,Runnable,Traceable {
 		this.endpointLog = endpointLog;
 	}
 
-	public Map<String, Router> getRouters() {
+	public LinkedHashMap<String, Router> getRouters() {
 		return routers;
 	}
 	
