@@ -20,6 +20,7 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 
+import com.uag.sd.weathermonitor.gui.models.SensorTableModel;
 import com.uag.sd.weathermonitor.model.endpoint.Endpoint;
 import com.uag.sd.weathermonitor.model.sensor.HumiditySensor;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;

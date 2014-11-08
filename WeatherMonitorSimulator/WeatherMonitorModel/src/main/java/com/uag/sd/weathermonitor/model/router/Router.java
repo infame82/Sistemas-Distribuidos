@@ -111,5 +111,15 @@ public class Router implements Runnable,Traceable{
 	public void removeEndpoint(String id) {
 		endpoints.remove(id);
 	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+	
+	
 	
 }

@@ -1,4 +1,4 @@
-package com.uag.sd.weathermonitor.gui;
+package com.uag.sd.weathermonitor.gui.models;
 
 import javax.swing.table.AbstractTableModel;
 

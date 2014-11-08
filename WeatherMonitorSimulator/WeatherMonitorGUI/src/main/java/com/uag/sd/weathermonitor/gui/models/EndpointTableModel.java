@@ -1,4 +1,4 @@
-package com.uag.sd.weathermonitor.gui;
+package com.uag.sd.weathermonitor.gui.models;
 
 import java.util.ArrayList;
 import java.util.List;

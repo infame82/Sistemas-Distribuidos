@@ -1,9 +1,8 @@
-package com.uag.sd.weathermonitor.gui;
+
 
 import java.awt.EventQueue;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import com.uag.sd.weathermonitor.gui.SensorNetworkSimGUI;
 
 
 public class Main {
@@ -12,7 +11,6 @@ public class Main {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					@SuppressWarnings("resource")
 					SensorNetworkSimGUI window = new SensorNetworkSimGUI();
 					window.getFrame().setVisible(true);
 				} catch (Exception e) {

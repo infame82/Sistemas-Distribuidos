@@ -1,4 +1,4 @@
-package com.uag.sd.weathermonitor.gui;
+package com.uag.sd.weathermonitor.gui.models;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ public class EndpointRouterTableModel extends AbstractTableModel{
 	private static final long serialVersionUID = -3087621825478973814L;
 	
 	private Endpoint endpoint;
-	private String[] columnNames = { "ID", "Location"};
+	private String[] columnNames = { "ID", "Location","Coverage"};
 
 	@Override
 	public int getRowCount() {
@@ -50,6 +50,8 @@ public class EndpointRouterTableModel extends AbstractTableModel{
 			return router.getId();
 		case 1:
 			return  "X: "+router.getLocation().getX()+", Y: "+router.getLocation().getY();
+		case 2:
+			return router.getCoverage();
 		}
 		return null;
 	}
