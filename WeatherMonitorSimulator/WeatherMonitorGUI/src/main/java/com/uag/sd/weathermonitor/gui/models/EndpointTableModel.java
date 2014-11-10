@@ -7,26 +7,26 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.uag.sd.weathermonitor.model.endpoint.Endpoint;
+import com.uag.sd.weathermonitor.model.endpoint.ZigBeeDevice;
 
 public class EndpointTableModel extends AbstractTableModel{
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -2378293237871201278L;
-	private List<Endpoint> endpoints;
+	private List<ZigBeeDevice> zigBeeDevices;
 	private String[] columnNames = { "ID", "Location", "Coverage",
 	        "Status" };
 	private ThreadPoolExecutor service;
 	
 	public EndpointTableModel() {
-		endpoints = new ArrayList<Endpoint>();
+		zigBeeDevices = new ArrayList<ZigBeeDevice>();
 		service = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 	}
 
 	@Override
 	public int getRowCount() {
-		return endpoints.size();
+		return zigBeeDevices.size();
 	}
 
 	@Override
@@ -41,34 +41,34 @@ public class EndpointTableModel extends AbstractTableModel{
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		Endpoint endpoint = endpoints.get(rowIndex);
+		ZigBeeDevice zigBeeDevice = zigBeeDevices.get(rowIndex);
 		switch(columnIndex) {
 		case 0:
-			return endpoint.getId();
+			return zigBeeDevice.getId();
 		case 1:
-			return "X: "+endpoint.getLocation().getX()+", Y: "+endpoint.getLocation().getY();
+			return "X: "+zigBeeDevice.getLocation().getX()+", Y: "+zigBeeDevice.getLocation().getY();
 		case 2:
-			return endpoint.getCoverage();
+			return zigBeeDevice.getCoverage();
 		case 3:
-			return endpoint.isActive()?"Active":"Inactive";
+			return zigBeeDevice.isActive()?"Active":"Inactive";
 		}
 		return null;
 	}
 	
-	public void addEndpoint(Endpoint endpoint) {
-		int rowCount = endpoints.size();
-		endpoints.add(endpoint);
+	public void addEndpoint(ZigBeeDevice zigBeeDevice) {
+		int rowCount = zigBeeDevices.size();
+		zigBeeDevices.add(zigBeeDevice);
 		fireTableRowsInserted(rowCount, rowCount);
 	}
 	
-	public Endpoint getEndpoint(int rowIndex) {
-		return endpoints.get(rowIndex);
+	public ZigBeeDevice getEndpoint(int rowIndex) {
+		return zigBeeDevices.get(rowIndex);
 	}
 	
-	public int getIndexOf(Endpoint endpoint) {
+	public int getIndexOf(ZigBeeDevice zigBeeDevice) {
 		int index = -1;
-		for(int i=0;i<endpoints.size();i++) {
-			if(endpoints.get(i).equals(endpoint)) {
+		for(int i=0;i<zigBeeDevices.size();i++) {
+			if(zigBeeDevices.get(i).equals(zigBeeDevice)) {
 				index = i;
 				break;
 			}
@@ -76,29 +76,29 @@ public class EndpointTableModel extends AbstractTableModel{
 		return index;
 	}
 	
-	public Endpoint removeEndpoint(int rowIndex) {
+	public ZigBeeDevice removeEndpoint(int rowIndex) {
 		fireTableRowsDeleted(rowIndex, rowIndex);
-		return endpoints.remove(rowIndex);
+		return zigBeeDevices.remove(rowIndex);
 	}
 	
 	public void startAllEnpoints() {
-		for(Endpoint endpoint:endpoints) {
-			if(!endpoint.isActive()) {
-				service.execute(endpoint);
+		for(ZigBeeDevice zigBeeDevice:zigBeeDevices) {
+			if(!zigBeeDevice.isActive()) {
+				service.execute(zigBeeDevice);
 			}
 		}
 		fireTableDataChanged();
 	}
 	
-	public void startEndpoint(Endpoint endpoint) {
-		service.execute(endpoint);
+	public void startEndpoint(ZigBeeDevice zigBeeDevice) {
+		service.execute(zigBeeDevice);
 	}
 	
 	public void stopAllEndpoints() {
-		for(Endpoint endpoint:endpoints) {
-			if(endpoint.isActive()) {
-				endpoint.stop();
-				service.remove(endpoint);
+		for(ZigBeeDevice zigBeeDevice:zigBeeDevices) {
+			if(zigBeeDevice.isActive()) {
+				zigBeeDevice.stop();
+				service.remove(zigBeeDevice);
 			}
 		}
 		fireTableDataChanged();

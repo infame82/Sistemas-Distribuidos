@@ -1,11 +1,9 @@
-package com.uag.sd.weathermonitor.model.traceability;
+package com.uag.sd.weathermonitor.model.device;
 
 import java.awt.Point;
 
 public interface Traceable {
 
-	int getCoverage();
-	
+	String getId();
 	Point getLocation();
-	
 }

@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -11,6 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
@@ -21,9 +24,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import com.uag.sd.weathermonitor.gui.models.EndpointTableModel;
-import com.uag.sd.weathermonitor.model.endpoint.Endpoint;
-import com.uag.sd.weathermonitor.model.logs.DeviceLog;
-import com.uag.sd.weathermonitor.model.sensor.SensorData;
+import com.uag.sd.weathermonitor.model.device.DeviceLog;
+import com.uag.sd.weathermonitor.model.endpoint.ZigBeeDevice;
 
 public class EndpointDialogGUI extends JDialog {
 
@@ -37,9 +39,9 @@ public class EndpointDialogGUI extends JDialog {
 	private JSpinner positionXField;
 	private JSpinner positionYField;
 	private JCheckBox activeBox;
-	private Endpoint endpoint;
+	private ZigBeeDevice zigBeeDevice;
 	private EndpointTableModel tableModel;
-	private DeviceLog<SensorData> sensorLog;
+	private DeviceLog sensorLog;
 
 	/**
 	 * Launch the application.
@@ -53,18 +55,18 @@ public class EndpointDialogGUI extends JDialog {
 		}
 	}
 
-	public EndpointDialogGUI(Endpoint endpoint,EndpointTableModel tableModel,DeviceLog<SensorData> sensorLog) {
+	public EndpointDialogGUI(ZigBeeDevice zigBeeDevice,EndpointTableModel tableModel,DeviceLog sensorLog) {
 		this();
-		this.endpoint = endpoint;
+		this.zigBeeDevice = zigBeeDevice;
 		this.tableModel = tableModel;
 		this.sensorLog = sensorLog;
-		if(endpoint!=null) {
-			idField.setText(endpoint.getId());
+		if(zigBeeDevice!=null) {
+			idField.setText(zigBeeDevice.getId());
 			idField.setEnabled(false);
-			coverageField.getModel().setValue(endpoint.getCoverage());
-			positionXField.getModel().setValue( new Double(endpoint.getLocation().getX()).intValue());
-			positionYField.getModel().setValue( new Double(endpoint.getLocation().getY()).intValue());
-			activeBox.setSelected(endpoint.isActive());
+			coverageField.getModel().setValue(zigBeeDevice.getCoverage());
+			positionXField.getModel().setValue( new Double(zigBeeDevice.getLocation().getX()).intValue());
+			positionYField.getModel().setValue( new Double(zigBeeDevice.getLocation().getY()).intValue());
+			activeBox.setSelected(zigBeeDevice.isActive());
 		}
 	}
 	
@@ -227,32 +229,37 @@ public class EndpointDialogGUI extends JDialog {
 					public void actionPerformed(ActionEvent e) {
 						boolean isNew = false;
 						
-						if(endpoint==null) {
-							endpoint = new Endpoint();
-							endpoint.setSensorLog(sensorLog);
+						if(zigBeeDevice==null) {
+							try {
+								zigBeeDevice = new ZigBeeDevice();
+							} catch (SocketException | UnknownHostException e1) {
+								JOptionPane.showMessageDialog(EndpointDialogGUI.this, e1.getMessage());
+								return;
+							}
+							zigBeeDevice.setSensorLog(sensorLog);
 							isNew = true;
 							
 						}
-						boolean prevState = endpoint.isActive();
-						endpoint.setId(idField.getText());
-						endpoint.setCoverage((int)coverageField.getModel().getValue());
-						endpoint.setLocation((int)positionXField.getModel().getValue(),
+						boolean prevState = zigBeeDevice.isActive();
+						zigBeeDevice.setId(idField.getText());
+						zigBeeDevice.setCoverage((int)coverageField.getModel().getValue());
+						zigBeeDevice.setLocation((int)positionXField.getModel().getValue(),
 								(int)positionYField.getModel().getValue());
-						endpoint.setActive(activeBox.isSelected());
+						zigBeeDevice.setActive(activeBox.isSelected());
 						if(isNew) {
-							tableModel.addEndpoint(endpoint);
-							if(endpoint.isActive()) {
-								tableModel.startEndpoint(endpoint);
+							tableModel.addEndpoint(zigBeeDevice);
+							if(zigBeeDevice.isActive()) {
+								tableModel.startEndpoint(zigBeeDevice);
 							}
 						}else {
-							if(prevState != endpoint.isActive()) {
-								if(endpoint.isActive()) {
-									tableModel.startEndpoint(endpoint);
+							if(prevState != zigBeeDevice.isActive()) {
+								if(zigBeeDevice.isActive()) {
+									tableModel.startEndpoint(zigBeeDevice);
 								}else {
-									endpoint.stop();
+									zigBeeDevice.stop();
 								}
 							}
-							int rowIndex = tableModel.getIndexOf(endpoint);
+							int rowIndex = tableModel.getIndexOf(zigBeeDevice);
 							tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
 						}
 						EndpointDialogGUI.this.dispose();

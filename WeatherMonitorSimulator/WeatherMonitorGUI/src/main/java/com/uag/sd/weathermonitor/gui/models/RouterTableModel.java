@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.uag.sd.weathermonitor.model.router.Router;
+import com.uag.sd.weathermonitor.model.router.ZigBeeRouter;
 
 public class RouterTableModel extends AbstractTableModel{
 
@@ -15,19 +15,19 @@ public class RouterTableModel extends AbstractTableModel{
 	 * 
 	 */
 	private static final long serialVersionUID = 2810225090066450282L;
-	private List<Router> routers;
+	private List<ZigBeeRouter> zigBeeRouters;
 	private String[] columnNames = { "ID", "Location", "Coverage",
     "Status" };
 	private ThreadPoolExecutor service;
 	
 	public RouterTableModel() {
-		routers = new ArrayList<Router>();
+		zigBeeRouters = new ArrayList<ZigBeeRouter>();
 		service = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 	}
 
 	@Override
 	public int getRowCount() {
-		return routers.size();
+		return zigBeeRouters.size();
 	}
 
 	@Override
@@ -42,34 +42,34 @@ public class RouterTableModel extends AbstractTableModel{
 	
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		Router router = routers.get(rowIndex);
+		ZigBeeRouter zigBeeRouter = zigBeeRouters.get(rowIndex);
 		switch(columnIndex) {
 		case 0:
-			return router.getId();
+			return zigBeeRouter.getId();
 		case 1:
-			return "X: "+router.getLocation().getX()+", Y: "+router.getLocation().getY();
+			return "X: "+zigBeeRouter.getLocation().getX()+", Y: "+zigBeeRouter.getLocation().getY();
 		case 2:
-			return router.getCoverage();
+			return zigBeeRouter.getCoverage();
 		case 3:
-			return router.isActive()?"Active":"Inactive";
+			return zigBeeRouter.isActive()?"Active":"Inactive";
 		}
 		return null;
 	}
 	
-	public void addRouter(Router router) {
-		int rowCount = routers.size();
-		routers.add(router);
+	public void addRouter(ZigBeeRouter zigBeeRouter) {
+		int rowCount = zigBeeRouters.size();
+		zigBeeRouters.add(zigBeeRouter);
 		fireTableRowsInserted(rowCount, rowCount);
 	}
 	
-	public Router getRouter(int rowIndex) {
-		return routers.get(rowIndex);
+	public ZigBeeRouter getRouter(int rowIndex) {
+		return zigBeeRouters.get(rowIndex);
 	}
 	
-	public int getIndexOf(Router router) {
+	public int getIndexOf(ZigBeeRouter zigBeeRouter) {
 		int index = -1;
-		for(int i=0;i<routers.size();i++) {
-			if(routers.get(i).equals(router)) {
+		for(int i=0;i<zigBeeRouters.size();i++) {
+			if(zigBeeRouters.get(i).equals(zigBeeRouter)) {
 				index = i;
 				break;
 			}
@@ -77,29 +77,29 @@ public class RouterTableModel extends AbstractTableModel{
 		return index;
 	}
 	
-	public Router removeEndpoint(int rowIndex) {
+	public ZigBeeRouter removeEndpoint(int rowIndex) {
 		fireTableRowsDeleted(rowIndex, rowIndex);
-		return routers.remove(rowIndex);
+		return zigBeeRouters.remove(rowIndex);
 	}
 	
 	public void startAllRouters() {
-		for(Router router:routers) {
-			if(!router.isActive()) {
-				service.execute(router);
+		for(ZigBeeRouter zigBeeRouter:zigBeeRouters) {
+			if(!zigBeeRouter.isActive()) {
+				service.execute(zigBeeRouter);
 			}
 		}
 		fireTableDataChanged();
 	}
 	
-	public void startRouter(Router router) {
-		service.execute(router);
+	public void startRouter(ZigBeeRouter zigBeeRouter) {
+		service.execute(zigBeeRouter);
 	}
 	
 	public void stopAllRouters() {
-		for(Router router:routers) {
-			if(router.isActive()) {
-				router.stop();
-				service.remove(router);
+		for(ZigBeeRouter zigBeeRouter:zigBeeRouters) {
+			if(zigBeeRouter.isActive()) {
+				zigBeeRouter.stop();
+				service.remove(zigBeeRouter);
 			}
 		}
 		fireTableDataChanged();

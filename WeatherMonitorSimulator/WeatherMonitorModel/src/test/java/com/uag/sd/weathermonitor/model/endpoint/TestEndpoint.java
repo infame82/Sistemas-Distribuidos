@@ -10,6 +10,7 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.uag.sd.weathermonitor.model.router.ZigBeeRouter;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 
 @ContextConfiguration(locations = { "classpath:META-INF/spring/spring-ctx.xml" })
@@ -25,27 +26,41 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 	
 	
 	@Autowired
-	@Qualifier("endpoint")
-	private Endpoint endpoint;
+	@Qualifier("zigBeeDevice")
+	private ZigBeeDevice zigBeeDevice;
+	
+	@Autowired
+	@Qualifier("zigBeeRouter")
+	private ZigBeeRouter zigBeeRouter;
 	
 	private ExecutorService service;
 	
 	@BeforeClass
 	public void init() {
-		service = Executors.newFixedThreadPool(2);
+		service = Executors.newFixedThreadPool(5);
 		tSensor.setLapse(2000);
+		tSensor.setId("T1");
 		hSensor.setLapse(2000);
-		endpoint.setId("testEndpoint");
-		endpoint.addSensor(tSensor);
-		endpoint.addSensor(hSensor);
-		endpoint.setActive(true);
+		hSensor.setId("H1");
+		zigBeeDevice.setId("ZigBee Device");
+		zigBeeDevice.addSensor(tSensor);
+		zigBeeDevice.addSensor(hSensor);
+		zigBeeDevice.setActive(true);
+		
+		zigBeeRouter.setId("ZibBee Router");
+		zigBeeRouter.setActive(true);
 	}
 	
 	@Test
 	public void testEndpoint() throws InterruptedException {
-		service.execute(endpoint);
+		service.execute(zigBeeDevice);
+		service.execute(zigBeeRouter);
+		Thread.sleep(3000);
+		zigBeeDevice.establishNetwork();
+		//zigBeeRouter.establishNetwork();
 		Thread.sleep(10000);
-		endpoint.stop();
+		zigBeeDevice.stop();
+		zigBeeRouter.stop();
 		Thread.sleep(3000);
 	}
 }

@@ -1,6 +1,8 @@
 package com.uag.sd.weathermonitor.model.sensor;
 
+import com.uag.sd.weathermonitor.model.device.DeviceData;
+
 public interface SensorMonitor {
 
-	void nofity(SensorData data);
+	void notify(DeviceData data);
 }

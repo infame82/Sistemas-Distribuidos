@@ -1,7 +1,8 @@
 package com.uag.sd.weathermonitor.model.sensor;
 
-import com.uag.sd.weathermonitor.model.endpoint.Endpoint;
-import com.uag.sd.weathermonitor.model.logs.DeviceLog;
+import com.uag.sd.weathermonitor.model.device.DeviceData;
+import com.uag.sd.weathermonitor.model.device.DeviceLog;
+import com.uag.sd.weathermonitor.model.endpoint.ZigBeeDevice;
 
 public abstract class Sensor implements Runnable{
 
@@ -10,8 +11,8 @@ public abstract class Sensor implements Runnable{
 	protected boolean active;
 	protected SensorMonitor monitor;
 	protected String value;
-	protected Endpoint parent;
-	protected DeviceLog<SensorData> log;
+	protected ZigBeeDevice parent;
+	protected DeviceLog log;
 	
 	//In milliseconds, 5000 = 5 sec
 	public static final long DEFAULT_LAPSE = 5000;
@@ -26,11 +27,11 @@ public abstract class Sensor implements Runnable{
 		this.id = id;
 	}
 	
-	public void setParent(Endpoint parent) {
+	public void setParent(ZigBeeDevice parent) {
 		this.parent = parent;
 	}
 	
-	public Endpoint getParent() {
+	public ZigBeeDevice getParent() {
 		return parent;
 	}
 	
@@ -38,11 +39,11 @@ public abstract class Sensor implements Runnable{
 	public void run() {
 		active = true;
 		if(log!=null) {
-			log.debug(new SensorData(id, "STARTED"));
+			log.debug(new DeviceData(id, "STARTED"));
 		}
 		while (active) {
 			if(monitor!=null) {
-				monitor.nofity(new SensorData(id, detect()));
+				monitor.notify(new DeviceData(id, detect()));
 			}
 			try {
 				Thread.sleep(lapse);
@@ -51,13 +52,13 @@ public abstract class Sensor implements Runnable{
 			}
 		}
 		if(log!=null) {
-			log.debug(new SensorData(id, "STOPPED"));
+			log.debug(new DeviceData(id, "STOPPED"));
 		}
 	}
 	
 	public void stop() {
 		if(log!=null) {
-			log.debug(new SensorData(id, "STOPPING..."));
+			log.debug(new DeviceData(id, "STOPPING..."));
 		}
 		active = false;
 	}
@@ -76,7 +77,7 @@ public abstract class Sensor implements Runnable{
 	}
 	public void setLapse(long lapse) {
 		if(log!=null && lapse!=this.lapse) {
-			log.debug(new SensorData(id, "Lapse updated: "+lapse));
+			log.debug(new DeviceData(id, "Lapse updated: "+lapse));
 		}
 		this.lapse = lapse;
 	}
@@ -99,16 +100,16 @@ public abstract class Sensor implements Runnable{
 	
 	public void setValue(String value) {
 		if(log!=null && !value.equals(this.value)) {
-			log.debug(new SensorData(id, "Value updated: "+value));
+			log.debug(new DeviceData(id, "Value updated: "+value));
 		}
 		this.value = value;
 	}
 
-	public DeviceLog<SensorData> getLog() {
+	public DeviceLog getLog() {
 		return log;
 	}
 
-	public void setLog(DeviceLog<SensorData> log) {
+	public void setLog(DeviceLog log) {
 		this.log = log;
 	}
 	

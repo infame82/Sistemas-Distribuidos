@@ -21,7 +21,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 
 import com.uag.sd.weathermonitor.gui.models.SensorTableModel;
-import com.uag.sd.weathermonitor.model.endpoint.Endpoint;
+import com.uag.sd.weathermonitor.model.endpoint.ZigBeeDevice;
 import com.uag.sd.weathermonitor.model.sensor.HumiditySensor;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 import com.uag.sd.weathermonitor.model.sensor.TemperatureSensor;
@@ -39,7 +39,7 @@ public class SensorDialogGUI extends JDialog {
 	private JTextField valueField;
 	private JSpinner lapseBox;
 	private JCheckBox chckbxActive;
-	private Endpoint endpoint;
+	private ZigBeeDevice zigBeeDevice;
 	private Sensor sensor;
 	private SensorTableModel sensorTableModel;
 
@@ -55,9 +55,9 @@ public class SensorDialogGUI extends JDialog {
 		}
 	}
 	
-	public SensorDialogGUI(Endpoint endpoint,Sensor sensor,SensorTableModel sensorTableModel) {
+	public SensorDialogGUI(ZigBeeDevice zigBeeDevice,Sensor sensor,SensorTableModel sensorTableModel) {
 		this();
-		this.endpoint = endpoint;
+		this.zigBeeDevice = zigBeeDevice;
 		this.sensor = sensor;
 		this.sensorTableModel = sensorTableModel;
 		if(sensor!=null) {
@@ -177,19 +177,19 @@ public class SensorDialogGUI extends JDialog {
 						sensor.setValue(valueField.getText());
 						sensor.setActive(chckbxActive.isSelected());
 						if(isNew) {
-							int rowCount = endpoint.getSensors().size();
-							endpoint.addSensor(sensor);
+							int rowCount = zigBeeDevice.getSensors().size();
+							zigBeeDevice.addSensor(sensor);
 							sensorTableModel.fireTableRowsInserted(rowCount, rowCount);
 							if(sensor.isActive()) {
-								endpoint.startSensor(sensor);
+								zigBeeDevice.startSensor(sensor);
 							}
 						}else {
 							if(prevState != sensor.isActive()) {
 								if(sensor.isActive()) {
 									sensor.setActive(false);
-									endpoint.startSensor(sensor);
+									zigBeeDevice.startSensor(sensor);
 								}else {
-									endpoint.stopSensor(sensor);
+									zigBeeDevice.stopSensor(sensor);
 								}
 							}
 							int rowIndex = sensorTableModel.getIndexOf(sensor);
