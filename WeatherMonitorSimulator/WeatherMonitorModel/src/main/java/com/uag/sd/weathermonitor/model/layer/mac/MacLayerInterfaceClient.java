@@ -1,11 +1,23 @@
 package com.uag.sd.weathermonitor.model.layer.mac;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
+import com.uag.sd.weathermonitor.model.device.Device;
+import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest.PRIMITIVE;
+import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse.CONFIRM;
+import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
 public class MacLayerInterfaceClient implements MacLayerInterface {
 
@@ -26,6 +38,135 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 
 	public void setLog(DeviceLog log) {
 		this.log = log;
+	}
+
+	@Override
+	public MacLayerResponse requestMacLayerNode(MacLayerRequest request) {
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.INVALID_REQUEST);
+		response.setMessage("Unknown");
+		request.setPrimitive(PRIMITIVE.REQUEST_MAC_NODE);
+		request.setId(System.currentTimeMillis());
+		int counter = 0;
+		
+		boolean availableNode = false;
+		DatagramSocket socket = null;
+		try {
+			socket = new DatagramSocket();
+			byte[] requestContent = ObjectSerializer.serialize(request);
+			DatagramPacket packet = new DatagramPacket(requestContent,
+					requestContent.length, group, MAC_LAYER_PORT);
+			mainLoop: while (!availableNode) {
+				counter++;
+				log.debug(new DeviceData(device.getId(), "Requesting MAC Layer Node ("+counter+")"));
+				socket.send(packet);
+				socket.setSoTimeout(REQUEST_TIME_OUT);
+				DatagramPacket reply = null;
+				try {
+					while (true) {
+						reply = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
+						socket.receive(reply);
+						response = (MacLayerResponse) ObjectSerializer
+								.unserialize(reply.getData());
+						availableNode = response.getConfirm() == CONFIRM.SUCCESS;
+						if (availableNode) {
+							break mainLoop;
+						}
+					}
+				} catch (SocketTimeoutException ste) {
+					
+					log.debug(new DeviceData(device.getId(), "Network layer node not available ("+counter+""));
+					
+				}
+				if(counter==MAX_REQUEST) {
+					response.setMessage("Not able to find an available node");
+					break;
+				}
+			}
+		} catch (IOException e) {
+			response.setMessage("Not able to serialize MAC Layer Request");
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			response.setMessage("Not able to unserialize MAC Layer Response");
+			e.printStackTrace();
+		}finally {
+			if(socket!=null) {
+				socket.close();
+			}
+		}
+		if(availableNode) {
+			log.debug(new DeviceData(device.getId(), "Available MAC Layer Node :"+response.getMessage()));
+		}
+		return response;
+	}
+	
+	private Socket getMacLayerSocket(Device device) throws NumberFormatException, UnknownHostException, IOException {
+		MacLayerRequest requestNode = new MacLayerRequest();
+		requestNode.setDevice(device);
+		MacLayerResponse response = requestMacLayerNode(requestNode);
+		if(response.getConfirm() != CONFIRM.SUCCESS) {
+			return null;
+		}
+		String[] address = response.getMessage().split(":");
+		return new Socket(address[0], Integer.parseInt(address[1]));
+	}
+	
+	private MacLayerResponse sendRequest(MacLayerRequest request,PRIMITIVE primitive) {
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.INVALID_REQUEST);
+		response.setMessage("Unknown");
+		request.setPrimitive(primitive);
+		request.setId(System.currentTimeMillis());
+		Socket socket = null;
+		try {
+			socket = getMacLayerSocket(request.getDevice());
+			if(socket==null) {
+				response.setMessage("Unable to establish connection with a Mac Layer Node");
+				return response;
+			}
+			log.debug(new DeviceData(device.getId(), "Requesting "+primitive.description+" "+socket.getInetAddress()+":"+socket.getPort()));
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			out.writeObject(request);
+			out.flush();
+			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+			MacLayerResponse aux = (MacLayerResponse) in.readObject();
+			response = aux;
+		} catch (NumberFormatException | IOException e) {
+			response.setMessage("Unable to connect to Mac Layer to request "+primitive.description);
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			response.setMessage("Unable to unserialize Mac Layer Response");
+			e.printStackTrace();
+		}finally {
+			try {
+				if(socket!=null) {
+					socket.close();
+				}
+			} catch (IOException e) {
+			}
+		}
+		
+		return response;
+	}
+
+	@Override
+	public MacLayerResponse energyDetectionScan(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.ENERGY_DETECTION_SCAN);
+	}
+
+	@Override
+	public MacLayerResponse activeScan(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.ACTIVE_SCAN);
+	}
+
+	@Override
+	public MacLayerResponse setPANId(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.SET_PAN_ID);
+	}
+
+	@Override
+	public MacLayerResponse start(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.START);
 	}
 	
 	

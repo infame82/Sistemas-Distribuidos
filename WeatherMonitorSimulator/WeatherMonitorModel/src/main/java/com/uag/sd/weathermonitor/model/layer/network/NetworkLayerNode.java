@@ -20,6 +20,8 @@ import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.Traceable;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerInterfaceClient;
+import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest;
+import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
@@ -137,7 +139,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 
 		public TcpNetworkRequestConnection() throws IOException {
 			socket = new ServerSocket(0);
-			log.debug(new DeviceData(traceableDevice.getId(),"TCP Socket("+socket.getLocalPort()+") opened."));
+			log.debug(new DeviceData(traceableDevice.getId(),"TCP Network Node Socket("+socket.getLocalPort()+") opened."));
 			active = false;
 			requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 		}
@@ -153,6 +155,8 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 				if(active) {
 					e.printStackTrace();
 				}
+			}finally {
+				log.debug(new DeviceData(traceableDevice.getId(),"TCP Network Node Socket("+socket.getLocalPort()+") closed."));
 			}
 
 		}
@@ -195,7 +199,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			group = InetAddress.getByName(NETWORK_LAYER_ADDRESS);
 			socket.joinGroup(group);
 			log.debug(new DeviceData(traceableDevice.getId(),
-					"Network Layer Node started on " + NETWORK_LAYER_ADDRESS
+					"Network Layer Node has started to listen Multicast Socket on" + NETWORK_LAYER_ADDRESS
 							+ ":" + NETWORK_LAYER_PORT));
 			tcpNetworkRequestConnection = new TcpNetworkRequestConnection();
 			requestExecutor.execute(tcpNetworkRequestConnection);
@@ -206,13 +210,16 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 				requestExecutor.execute(new NetworkRequestResolver(packet
 						.getData(), packet.getAddress(), packet.getPort()));
 			}
+			
+		} catch (IOException e1) {
+			if (isListening) {
+				log.debug(new DeviceData(traceableDevice.getId(), e1.getMessage()));
+				e1.printStackTrace();
+			}
+		}finally {
 			log.debug(new DeviceData(traceableDevice.getId(),
 					"Network Layer Node stopped on " + NETWORK_LAYER_ADDRESS
 							+ ":" + NETWORK_LAYER_PORT));
-		} catch (IOException e1) {
-			if (isListening) {
-				e1.printStackTrace();
-			}
 		}
 	}
 
@@ -220,9 +227,9 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		log.debug(new DeviceData(traceableDevice.getId(),
 				"Stopping Network Layer Node on " + NETWORK_LAYER_ADDRESS + ":"
 						+ NETWORK_LAYER_PORT));
+		tcpNetworkRequestConnection.stop();
 		requestExecutor.shutdownNow();
 		isListening = false;
-		tcpNetworkRequestConnection.stop();
 		socket.close();
 	}
 
@@ -231,9 +238,21 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			NetworlLayerRequest request) {
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
-						+ "'), Device ("+request.getDevice().getId()+") is requesting network formation"));
+						+ "'), Device ("+request.getDevice().getId()+") is requesting Network Formation"));
 		NetworkLayerResponse response = new NetworkLayerResponse();
 		response.setConfirm(CONFIRM.INVALID_REQUEST);
+		if(!request.getDevice().isCoordinator()) {
+			response.setMessage("Device("+request.getDevice().getId()+") is not a coordinator");
+			return response;
+		}
+		
+		MacLayerRequest macRequest = new MacLayerRequest();
+		macRequest.setDevice(request.getDevice());
+		MacLayerResponse macResponse = macInterfaceClient.energyDetectionScan(macRequest);
+		if(macResponse.getConfirm() != MacLayerResponse.CONFIRM.SUCCESS) {
+			response.setMessage(macResponse.getMessage());
+			return response;
+		}
 		response.setMessage("Not implemented");
 		return response;
 	}
@@ -243,7 +262,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			NetworlLayerRequest request) {
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
-						+ "'), Device ("+request.getDevice().getId()+") is requesting a network layer node"));
+						+ "'), Device ("+request.getDevice().getId()+") is requesting a Network Layer Node"));
 		NetworkLayerResponse response = new NetworkLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
 		StringBuilder builder = new StringBuilder();
@@ -258,7 +277,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		response.setMessage(builder.toString());
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
-						+ "'), available node"));
+						+ "'), available Network Node"));
 		return response;
 	}
 

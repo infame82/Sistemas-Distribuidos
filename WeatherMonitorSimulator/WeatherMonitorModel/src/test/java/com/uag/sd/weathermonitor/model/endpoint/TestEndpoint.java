@@ -56,8 +56,10 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 		service.execute(zigBeeDevice);
 		service.execute(zigBeeRouter);
 		Thread.sleep(3000);
+		zigBeeDevice.setCoordinator(true);
 		zigBeeDevice.establishNetwork();
-		//zigBeeRouter.establishNetwork();
+		zigBeeRouter.setCoordinator(true);
+		zigBeeRouter.establishNetwork();
 		Thread.sleep(10000);
 		zigBeeDevice.stop();
 		zigBeeRouter.stop();
