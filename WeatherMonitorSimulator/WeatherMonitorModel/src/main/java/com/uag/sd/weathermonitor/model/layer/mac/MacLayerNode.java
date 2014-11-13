@@ -9,7 +9,10 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -20,6 +23,12 @@ import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.Traceable;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse.CONFIRM;
+import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerInterfaceClient;
+import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerNode;
+import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerRequest;
+import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse;
+import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
+import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
 public class MacLayerNode implements Runnable, MacLayerInterface {
@@ -33,6 +42,9 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 
 	private TcpMacRequestConnection tcpMacConnection;
 	private ThreadPoolExecutor requestExecutor;
+	
+	private PhysicalLayerNode physicalNode;
+	private PhysicalLayerInterfaceClient physicalClient;
 	
 	private class MacRequestResolver implements Runnable{
 
@@ -179,11 +191,12 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 
 	}
 
-	public MacLayerNode(Traceable traceableDevice, DeviceLog log) {
+	public MacLayerNode(Traceable traceableDevice, DeviceLog log) throws SocketException, UnknownHostException {
 		this.traceableDevice = traceableDevice;
 		this.log = log;
 		active = false;
 		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+		physicalClient = new PhysicalLayerInterfaceClient(traceableDevice,log);
 	}
 
 	@Override
@@ -192,6 +205,9 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		byte[] buf = null;
 		active = true;
 		try {
+			physicalNode = new PhysicalLayerNode(traceableDevice,log);
+			requestExecutor.execute(physicalNode);
+			
 			socket = new MulticastSocket(MAC_LAYER_PORT);
 			group = InetAddress.getByName(MAC_LAYER_ADDRESS);
 			socket.joinGroup(group);
@@ -224,6 +240,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		log.debug(new DeviceData(traceableDevice.getId(),
 				"Stopping MAC Layer Node on " + MAC_LAYER_ADDRESS + ":"
 						+ MAC_LAYER_PORT));
+		physicalNode.stop();
 		active = false;
 		tcpMacConnection.stop();
 		requestExecutor.shutdownNow();
@@ -285,11 +302,29 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.INVALID_REQUEST);
 		response.setMessage("Not implemented");
+		PhysicalLayerRequest physicalRequest = new PhysicalLayerRequest();
+		physicalRequest.setDevice(request.getDevice());
+		PhysicalLayerResponse physicalResponse = physicalClient.getChannels(physicalRequest);
+		if(physicalResponse==null || physicalResponse.getConfirm()!=com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse.CONFIRM.SUCCESS) {
+			response.setMessage("Unable to have available channels");
+			return response;
+		}
+		
+		Map<RF_CHANNEL, RFChannel> acceptableChannels = new HashMap<RFChannel.RF_CHANNEL, RFChannel>();
+		for(RFChannel channel:response.getChannels().values()) {
+			if(channel.getEnergy()<=ACCEPTABLE_ENERGY_LEVEL) {
+				acceptableChannels.put(channel.getChannel(),channel);
+			}
+		}
+		
+		response.setConfirm(CONFIRM.SUCCESS);
+		response.setMessage("OK");
+		response.setChannels(acceptableChannels);
 		return response;
 	}
 
 	@Override
-	public MacLayerResponse activeScan(MacLayerRequest request) {
+	public synchronized MacLayerResponse activeScan(MacLayerRequest request) {
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
 						+ "'), Device ("+request.getDevice().getId()+") is requesting "+request.getPrimitive().description));
@@ -300,7 +335,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 	}
 
 	@Override
-	public MacLayerResponse setPANId(MacLayerRequest request) {
+	public synchronized MacLayerResponse setPANId(MacLayerRequest request) {
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
 						+ "'), Device ("+request.getDevice().getId()+") is requesting "+request.getPrimitive().description));
@@ -311,7 +346,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 	}
 
 	@Override
-	public MacLayerResponse start(MacLayerRequest request) {
+	public synchronized MacLayerResponse start(MacLayerRequest request) {
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
 						+ "'), Device ("+request.getDevice().getId()+") is requesting "+request.getPrimitive().description));

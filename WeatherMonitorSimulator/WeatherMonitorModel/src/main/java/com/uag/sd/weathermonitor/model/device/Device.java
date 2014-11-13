@@ -8,12 +8,11 @@ import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import com.uag.sd.weathermonitor.model.layer.mac.MacLayerNode;
 import com.uag.sd.weathermonitor.model.layer.network.NerworkLayerInterfaceClient;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerNode;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse;
-import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse.CONFIRM;
+import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest.PRIMITIVE;
 
 public abstract class Device implements Serializable,Runnable,Traceable{
@@ -32,7 +31,7 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 	
 	protected transient DeviceLog log;
 	protected transient NetworkLayerNode networkLayerNode;
-	protected transient MacLayerNode macLayerNode;
+	
 	protected transient NerworkLayerInterfaceClient networkInterfaceClient;
 	private transient ThreadPoolExecutor layerPoolExecutor;
 	
@@ -66,9 +65,9 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		log.debug(new DeviceData(id, "STARTED"));
 		try {
 			networkLayerNode = new NetworkLayerNode(this,log);
-			macLayerNode = new MacLayerNode(this,log);
+			
 			layerPoolExecutor.execute(networkLayerNode);
-			layerPoolExecutor.execute(macLayerNode);
+			
 			init();
 			while (active) {
 				execute();
@@ -87,7 +86,7 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 	public void stop() {
 		log.debug(new DeviceData(id, "STOPPING..."));
 		networkLayerNode.stop();
-		macLayerNode.stop();
+		
 		active = false;
 	}
 	

@@ -7,6 +7,7 @@ public interface MacLayerInterface {
 	static final int MAX_REQUEST = 5;
 	static final int REQUEST_TIME_OUT = 5000;
 	static final int BUFFER_SIZE = 1024;
+	static final int ACCEPTABLE_ENERGY_LEVEL = 10;
 	
 	MacLayerResponse requestMacLayerNode(MacLayerRequest request);
 	MacLayerResponse energyDetectionScan(MacLayerRequest request);

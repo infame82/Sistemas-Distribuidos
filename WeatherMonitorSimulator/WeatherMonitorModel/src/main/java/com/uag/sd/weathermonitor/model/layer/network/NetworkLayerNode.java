@@ -20,6 +20,7 @@ import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.Traceable;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerInterfaceClient;
+import com.uag.sd.weathermonitor.model.layer.mac.MacLayerNode;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse.CONFIRM;
@@ -36,6 +37,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 	private TcpNetworkRequestConnection tcpNetworkRequestConnection;
 	private ThreadPoolExecutor requestExecutor;
 	
+	protected transient MacLayerNode macLayerNode;
 	private MacLayerInterfaceClient macInterfaceClient;
 
 	private class NetworkRequestResolver implements Runnable {
@@ -195,6 +197,8 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		byte[] buf = null;
 		isListening = true;
 		try {
+			macLayerNode = new MacLayerNode(traceableDevice,log);
+			requestExecutor.execute(macLayerNode);
 			socket = new MulticastSocket(NETWORK_LAYER_PORT);
 			group = InetAddress.getByName(NETWORK_LAYER_ADDRESS);
 			socket.joinGroup(group);
@@ -227,6 +231,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		log.debug(new DeviceData(traceableDevice.getId(),
 				"Stopping Network Layer Node on " + NETWORK_LAYER_ADDRESS + ":"
 						+ NETWORK_LAYER_PORT));
+		macLayerNode.stop();
 		tcpNetworkRequestConnection.stop();
 		requestExecutor.shutdownNow();
 		isListening = false;

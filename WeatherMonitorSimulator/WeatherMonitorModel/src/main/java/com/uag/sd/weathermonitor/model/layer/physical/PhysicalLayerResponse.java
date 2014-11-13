@@ -1,4 +1,4 @@
-package com.uag.sd.weathermonitor.model.layer.mac;
+package com.uag.sd.weathermonitor.model.layer.physical;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -6,13 +6,14 @@ import java.util.Map;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 
-public class MacLayerResponse implements Serializable {
 
+public class PhysicalLayerResponse implements Serializable{
+
+	
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -1828424982555084019L;
-	
+	private static final long serialVersionUID = 5138691053979203050L;
 	public enum CONFIRM{INVALID_REQUEST,SUCCESS};
 	
 	
