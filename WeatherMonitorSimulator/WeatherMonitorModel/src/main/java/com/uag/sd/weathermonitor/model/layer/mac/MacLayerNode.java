@@ -311,7 +311,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		}
 		
 		Map<RF_CHANNEL, RFChannel> acceptableChannels = new HashMap<RFChannel.RF_CHANNEL, RFChannel>();
-		for(RFChannel channel:response.getChannels().values()) {
+		for(RFChannel channel:physicalResponse.getChannels().values()) {
 			if(channel.getEnergy()<=ACCEPTABLE_ENERGY_LEVEL) {
 				acceptableChannels.put(channel.getChannel(),channel);
 			}
