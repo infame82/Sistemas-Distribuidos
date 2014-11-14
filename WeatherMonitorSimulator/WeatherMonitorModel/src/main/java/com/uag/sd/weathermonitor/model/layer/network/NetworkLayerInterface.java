@@ -8,6 +8,8 @@ public interface NetworkLayerInterface {
 	static final int REQUEST_TIME_OUT = 5000;
 	static final int BUFFER_SIZE = 1024;
 	
+	
+	
 	NetworkLayerResponse requestNetworkFormation(NetworlLayerRequest request);
 	NetworkLayerResponse requestNetworkLayerNode(NetworlLayerRequest request);
 

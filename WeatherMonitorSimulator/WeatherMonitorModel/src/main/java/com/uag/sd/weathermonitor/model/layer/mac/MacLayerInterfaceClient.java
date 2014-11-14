@@ -100,7 +100,7 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 		return response;
 	}
 	
-	private Socket getMacLayerSocket(Device device) throws NumberFormatException, UnknownHostException, IOException {
+	private Socket getMacLayerSocket(Traceable device) throws NumberFormatException, UnknownHostException, IOException {
 		MacLayerRequest requestNode = new MacLayerRequest();
 		requestNode.setDevice(device);
 		MacLayerResponse response = requestMacLayerNode(requestNode);
@@ -167,6 +167,11 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 	@Override
 	public MacLayerResponse start(MacLayerRequest request) {
 		return sendRequest(request, PRIMITIVE.START);
+	}
+
+	@Override
+	public MacLayerResponse getRegisteredDevices(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.REQUEST_REGISTERED_DEVICES);
 	}
 	
 	

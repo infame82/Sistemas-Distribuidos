@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -45,6 +46,9 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 	
 	private PhysicalLayerNode physicalNode;
 	private PhysicalLayerInterfaceClient physicalClient;
+	private MacLayerInterfaceClient macClient;
+	
+	private Map<RF_CHANNEL,List<Traceable>> registeredDevices;
 	
 	private class MacRequestResolver implements Runnable{
 
@@ -129,6 +133,10 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 					MacLayerRequest request = (MacLayerRequest) in.readObject();
 					if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.ENERGY_DETECTION_SCAN) {
 						response = energyDetectionScan(request);
+					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.REQUEST_REGISTERED_DEVICES) {
+						response = getRegisteredDevices(request);
+					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.ACTIVE_SCAN) {
+						response = activeScan(request);
 					}
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -197,6 +205,16 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		active = false;
 		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 		physicalClient = new PhysicalLayerInterfaceClient(traceableDevice,log);
+		macClient = new MacLayerInterfaceClient(traceableDevice, log);
+		
+		MacLayerRequest macRequest = new MacLayerRequest();
+		macRequest.setDevice(traceableDevice);
+		MacLayerResponse response = macClient.getRegisteredDevices(macRequest);
+		registeredDevices = response.getRegisteredDevices();
+		if(registeredDevices==null) {
+			registeredDevices = new HashMap<RFChannel.RF_CHANNEL, List<Traceable>>();
+		}
+		
 	}
 
 	@Override
@@ -319,7 +337,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		
 		response.setConfirm(CONFIRM.SUCCESS);
 		response.setMessage("OK");
-		response.setChannels(acceptableChannels);
+		response.setChannels(physicalResponse.getChannels());
 		return response;
 	}
 
@@ -329,8 +347,13 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 				"Request ID ('" + request.getId()
 						+ "'), Device ("+request.getDevice().getId()+") is requesting "+request.getPrimitive().description));
 		MacLayerResponse response = new MacLayerResponse();
-		response.setConfirm(CONFIRM.INVALID_REQUEST);
-		response.setMessage("Not implemented");
+		response.setConfirm(CONFIRM.SUCCESS);
+		response.setMessage("OK");
+		Map<RF_CHANNEL,List<Traceable>> registeredDevices = new HashMap<RFChannel.RF_CHANNEL, List<Traceable>>();
+		for(RF_CHANNEL channel:request.getActiveChannels()) {
+			registeredDevices.put(channel,registeredDevices.get(channel));
+		}
+		response.setRegisteredDevices(registeredDevices);
 		return response;
 	}
 
@@ -353,6 +376,15 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.INVALID_REQUEST);
 		response.setMessage("Not implemented");
+		return response;
+	}
+
+	@Override
+	public synchronized MacLayerResponse getRegisteredDevices(MacLayerRequest request) {
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.SUCCESS);
+		response.setMessage("");
+		response.setRegisteredDevices(registeredDevices);
 		return response;
 	}
 

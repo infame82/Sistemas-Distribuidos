@@ -10,6 +10,9 @@ import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -24,6 +27,8 @@ import com.uag.sd.weathermonitor.model.layer.mac.MacLayerNode;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse.CONFIRM;
+import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
+import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
 public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
@@ -37,7 +42,8 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 	private TcpNetworkRequestConnection tcpNetworkRequestConnection;
 	private ThreadPoolExecutor requestExecutor;
 	
-	protected transient MacLayerNode macLayerNode;
+	
+	private MacLayerNode macLayerNode;
 	private MacLayerInterfaceClient macInterfaceClient;
 
 	private class NetworkRequestResolver implements Runnable {
@@ -258,6 +264,25 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			response.setMessage(macResponse.getMessage());
 			return response;
 		}
+		
+		Map<RF_CHANNEL, RFChannel> acceptableChannels = macResponse.getChannels();
+		macRequest.setActiveChannels(new ArrayList<RFChannel.RF_CHANNEL>(acceptableChannels.keySet()));
+		macResponse = macInterfaceClient.activeScan(macRequest);
+		
+		RF_CHANNEL selectedChannel = null;
+		int minDevices = 0;
+		Map<RF_CHANNEL, List<Traceable>> registeredDevices = macResponse.getRegisteredDevices();
+		for(RF_CHANNEL channel:registeredDevices.keySet()) {
+			if(selectedChannel==null) {
+				selectedChannel = channel;
+			}else {
+				List<Traceable> devices = registeredDevices.get(channel);
+				if((devices==null && minDevices>0) || (devices!=null && (devices.size()<minDevices))) {
+					selectedChannel = channel;
+				}
+			}	
+		}
+		
 		response.setMessage("Not implemented");
 		return response;
 	}
