@@ -8,12 +8,14 @@ import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import com.uag.sd.weathermonitor.model.layer.mac.MacLayerNode;
 import com.uag.sd.weathermonitor.model.layer.network.NerworkLayerInterfaceClient;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerNode;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest.PRIMITIVE;
+import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerNode;
 
 public abstract class Device implements Serializable,Runnable,Traceable{
 	/**
@@ -23,39 +25,47 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 
 	
 	protected String id;
+	protected int panID;
 	protected int coverage;
 	protected int operatingChannel;
 	protected boolean coordinator;
 	protected boolean active;
 	protected Point location;
+	protected boolean started;
 	
 	protected transient DeviceLog log;
 	protected transient NetworkLayerNode networkLayerNode;
+	private transient MacLayerNode macLayerNode;
+	private transient PhysicalLayerNode physicalNode;
 	
 	protected transient NerworkLayerInterfaceClient networkInterfaceClient;
 	private transient ThreadPoolExecutor layerPoolExecutor;
 	
-	
-	public Device() throws SocketException, UnknownHostException {
+		
+	public Device(String id,DeviceLog log) throws IOException  {
+		this.id = id;
+		this.log = log;
+		panID = -1;
 		coordinator = false;
 		active = false;
+		started = false;
 		coverage = 5;
 		location = new Point();
 		log = new DefaultDeviceLog();
 		layerPoolExecutor = (ThreadPoolExecutor) Executors
 				.newFixedThreadPool(10);
+		
+		physicalNode = new PhysicalLayerNode(this,log);
+		layerPoolExecutor.execute(physicalNode);	
+		
+		macLayerNode = new MacLayerNode(this,log);
+		layerPoolExecutor.execute(macLayerNode);
+		
+		networkLayerNode = new NetworkLayerNode(this,log);
+		layerPoolExecutor.execute(networkLayerNode);
+		
 		networkInterfaceClient = new NerworkLayerInterfaceClient(this,log);
-	}
-	
-	public Device(String id) throws SocketException, UnknownHostException {
-		this();
-		this.id = id;
-	}
-	
-	public Device(String id,DeviceLog log) throws SocketException, UnknownHostException  {
-		this(id);
-		this.log = log;
-		networkInterfaceClient.setLog(log);
+		
 	}
 	
 	
@@ -64,16 +74,14 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		active = true;
 		log.debug(new DeviceData(id, "STARTED"));
 		try {
-			networkLayerNode = new NetworkLayerNode(this,log);
 			
-			layerPoolExecutor.execute(networkLayerNode);
 			
 			init();
 			while (active) {
 				execute();
 				Thread.sleep(0);
 			}
-		} catch (InterruptedException | IOException e) {
+		} catch (InterruptedException e) {
 			if(active) {
 				e.printStackTrace();
 			}
@@ -85,6 +93,8 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 	
 	public void stop() {
 		log.debug(new DeviceData(id, "STOPPING..."));
+		physicalNode.stop();
+		macLayerNode.stop();
 		networkLayerNode.stop();
 		
 		active = false;
@@ -97,6 +107,7 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 			log.debug(new DeviceData(id,response.getMessage()));
 			return false;
 		}
+		setStarted(true);
 		return true;
 	}
 	
@@ -159,7 +170,23 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		this.log = log;
 	}
 
+	public int getPanId() {
+		return panID;
+	}
 	
+	public void setPanId(int panId) {
+		this.panID = panId;
+	}
+
+
+	public boolean isStarted() {
+		return started;
+	}
+
+
+	public void setStarted(boolean started) {
+		this.started = started;
+	}
 	
 
 		

@@ -10,8 +10,8 @@ import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -36,7 +36,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 	private boolean isListening;
 	private ThreadPoolExecutor requestExecutor;
 	private TcpPhysicalRequestConnection tcpPhysicalRequestConnection;
-	private Map<RF_CHANNEL,RFChannel> channels;
+	private List<RFChannel> channels;
 	private PhysicalLayerInterfaceClient physicalClient;
 	private EnergyLevelStabilizer energyLevelStabilizer;
 	
@@ -49,7 +49,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 				try {
 					Thread.sleep(timer);
 					synchronized (channels) {
-						for(RFChannel channel:channels.values()) {
+						for(RFChannel channel:channels) {
 							if(channel.getEnergy()>0) {
 								channel.setEnergy(channel.getEnergy()-1);
 							}
@@ -203,21 +203,21 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 		physicalRequest.setDevice(traceableDevice);
 		PhysicalLayerResponse response = physicalClient.getChannels(physicalRequest);
 		if(response.getConfirm() == CONFIRM.INVALID_REQUEST) {
-			channels = new HashMap<RFChannel.RF_CHANNEL, RFChannel>();
-			channels.put(RF_CHANNEL.CH_11, new RFChannel(RF_CHANNEL.CH_11));
-			channels.put(RF_CHANNEL.CH_12, new RFChannel(RF_CHANNEL.CH_12));
-			channels.put(RF_CHANNEL.CH_13, new RFChannel(RF_CHANNEL.CH_13));
-			channels.put(RF_CHANNEL.CH_14, new RFChannel(RF_CHANNEL.CH_14));
-			channels.put(RF_CHANNEL.CH_15, new RFChannel(RF_CHANNEL.CH_15));
-			channels.put(RF_CHANNEL.CH_16, new RFChannel(RF_CHANNEL.CH_16));
-			channels.put(RF_CHANNEL.CH_17, new RFChannel(RF_CHANNEL.CH_17));
-			channels.put(RF_CHANNEL.CH_18, new RFChannel(RF_CHANNEL.CH_18));
-			channels.put(RF_CHANNEL.CH_19, new RFChannel(RF_CHANNEL.CH_19));
-			channels.put(RF_CHANNEL.CH_20, new RFChannel(RF_CHANNEL.CH_20));
-			channels.put(RF_CHANNEL.CH_21, new RFChannel(RF_CHANNEL.CH_21));
-			channels.put(RF_CHANNEL.CH_22, new RFChannel(RF_CHANNEL.CH_22));
-			channels.put(RF_CHANNEL.CH_23, new RFChannel(RF_CHANNEL.CH_23));
-			channels.put(RF_CHANNEL.CH_24, new RFChannel(RF_CHANNEL.CH_24));
+			channels = new ArrayList<RFChannel>();
+			channels.add(new RFChannel(RF_CHANNEL.CH_11));
+			channels.add(new RFChannel(RF_CHANNEL.CH_12));
+			channels.add(new RFChannel(RF_CHANNEL.CH_13));
+			channels.add(new RFChannel(RF_CHANNEL.CH_14));
+			channels.add(new RFChannel(RF_CHANNEL.CH_15));
+			channels.add(new RFChannel(RF_CHANNEL.CH_16));
+			channels.add(new RFChannel(RF_CHANNEL.CH_17));
+			channels.add(new RFChannel(RF_CHANNEL.CH_18));
+			channels.add(new RFChannel(RF_CHANNEL.CH_19));
+			channels.add(new RFChannel(RF_CHANNEL.CH_20));
+			channels.add(new RFChannel(RF_CHANNEL.CH_21));
+			channels.add(new RFChannel(RF_CHANNEL.CH_22));
+			channels.add(new RFChannel(RF_CHANNEL.CH_23));
+			channels.add(new RFChannel(RF_CHANNEL.CH_24));
 		}else {
 			channels = response.getChannels();
 		}
@@ -310,9 +310,18 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 		PhysicalLayerResponse response = new PhysicalLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
 		response.setMessage("");
-		RFChannel channel = channels.get(request.getSelectedChannel());
+		RFChannel channel = getChannel(request.getSelectedChannel());
 		channel.setEnergy(channel.getEnergy()+1);
 		return response;
+	}
+	
+	private RFChannel getChannel(RF_CHANNEL channelNumber) {
+		for(RFChannel channel:channels) {
+			if(channel.getChannel()== channelNumber) {
+				return channel;
+			}
+		}
+		return null;
 	}
 
 }

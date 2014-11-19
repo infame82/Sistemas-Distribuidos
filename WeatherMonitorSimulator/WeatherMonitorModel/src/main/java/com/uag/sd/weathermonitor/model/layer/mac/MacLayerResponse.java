@@ -6,7 +6,6 @@ import java.util.Map;
 
 import com.uag.sd.weathermonitor.model.device.Traceable;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
-import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 
 public class MacLayerResponse implements Serializable {
 
@@ -15,13 +14,14 @@ public class MacLayerResponse implements Serializable {
 	 */
 	private static final long serialVersionUID = -1828424982555084019L;
 	
-	public enum CONFIRM{INVALID_REQUEST,SUCCESS};
+	public enum CONFIRM{INVALID_REQUEST,SUCCESS,STARTUP_FAILURE};
 	
 	
 	private CONFIRM confirm;
 	private String message;
-	private Map<RF_CHANNEL,RFChannel> channels;
-	private Map<RF_CHANNEL,List<Traceable>> registeredDevices;
+	private List<RFChannel> channels;
+	private Map<RFChannel,List<Traceable>> registeredDevices;
+	private long extendedAddress;
 	
 	public CONFIRM getConfirm() {
 		return confirm;
@@ -35,17 +35,23 @@ public class MacLayerResponse implements Serializable {
 	public void setMessage(String message) {
 		this.message = message;
 	}
-	public Map<RF_CHANNEL, RFChannel> getChannels() {
+	public List<RFChannel> getChannels() {
 		return channels;
 	}
-	public void setChannels(Map<RF_CHANNEL, RFChannel> channels) {
+	public void setChannels(List<RFChannel>  channels) {
 		this.channels = channels;
 	}
-	public Map<RF_CHANNEL, List<Traceable>> getRegisteredDevices() {
+	public Map<RFChannel, List<Traceable>> getRegisteredDevices() {
 		return registeredDevices;
 	}
-	public void setRegisteredDevices(Map<RF_CHANNEL, List<Traceable>> registeredDevices) {
+	public void setRegisteredDevices(Map<RFChannel, List<Traceable>> registeredDevices) {
 		this.registeredDevices = registeredDevices;
+	}
+	public long getExtendedAddress() {
+		return extendedAddress;
+	}
+	public void setExtendedAddress(long extendedAddress) {
+		this.extendedAddress = extendedAddress;
 	}
 	
 	

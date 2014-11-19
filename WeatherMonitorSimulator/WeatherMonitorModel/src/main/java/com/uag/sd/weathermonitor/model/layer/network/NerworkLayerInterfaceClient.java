@@ -11,7 +11,6 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
-import com.uag.sd.weathermonitor.model.device.Device;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.Traceable;
@@ -58,13 +57,14 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 			DatagramPacket packet = new DatagramPacket(requestContent,
 					requestContent.length, group, NETWORK_LAYER_PORT);
 			mainLoop: while (!availableNode) {
+				counter++;
 				log.debug(new DeviceData(device.getId(),
 						"Requesting network layer node (" + counter + ")"));
 				socket.send(packet);
 				socket.setSoTimeout(REQUEST_TIME_OUT);
 				DatagramPacket reply = null;
 				try {
-					while (true) {
+					//while (true) {
 						reply = new DatagramPacket(new byte[BUFFER_SIZE],
 								BUFFER_SIZE);
 						socket.receive(reply);
@@ -74,15 +74,14 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 						if (availableNode) {
 							break mainLoop;
 						}
-					}
+					//}
 				} catch (SocketTimeoutException ste) {
-					counter++;
 					log.debug(new DeviceData(device.getId(),
-							"Network layer node not available (" + counter + ""));
+							"Network layer node not available (" + counter + ")"));
 
 				}
-				if (counter == MAX_REQUEST) {
-					response.setMessage("Not able to find an available node");
+				if(counter==MAX_REQUEST) {
+					response.setMessage("Not able to find an available netowork node");
 					break;
 				}
 			}
@@ -104,7 +103,7 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 		return response;
 	}
 
-	private Socket getNetworkLayerSocket(Device device)
+	private Socket getNetworkLayerSocket(Traceable device)
 			throws NumberFormatException, UnknownHostException, IOException {
 		NetworlLayerRequest requestNode = new NetworlLayerRequest();
 		requestNode.setDevice(device);
@@ -164,6 +163,11 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 	public NetworkLayerResponse requestNetworkFormation(
 			NetworlLayerRequest request) {
 		return sendRequest(request, PRIMITIVE.REQUEST_NETWORK_FORMATION);
+	}
+
+	@Override
+	public NetworkLayerResponse requestExtenedPanId(NetworlLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.REQUEST_EXTENDED_PAN_ID);
 	}
 
 }

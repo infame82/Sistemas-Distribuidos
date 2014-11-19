@@ -16,4 +16,6 @@ public interface MacLayerInterface {
 	MacLayerResponse start(MacLayerRequest request);
 	
 	MacLayerResponse getRegisteredDevices(MacLayerRequest request);
+	MacLayerResponse getExtendedAddress(MacLayerRequest request);
+	
 }

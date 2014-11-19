@@ -13,6 +13,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -28,7 +29,6 @@ import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
-import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
 public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
@@ -41,10 +41,12 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 	private boolean isListening;
 	private TcpNetworkRequestConnection tcpNetworkRequestConnection;
 	private ThreadPoolExecutor requestExecutor;
+	private Random random;
 	
 	
-	private MacLayerNode macLayerNode;
 	private MacLayerInterfaceClient macInterfaceClient;
+	private NerworkLayerInterfaceClient networkClient;
+	private long extendedPANId;
 
 	private class NetworkRequestResolver implements Runnable {
 		private final byte[] requestContent;
@@ -125,9 +127,10 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 				response.setMessage("Unknown request");
 				try {
 					NetworlLayerRequest request = (NetworlLayerRequest) in.readObject();
-					if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.REQUEST_NETWORK_FORMATION) {
-						
+					if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.REQUEST_NETWORK_FORMATION) {					
 						response = requestNetworkFormation(request);
+					}else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.REQUEST_EXTENDED_PAN_ID) {	
+						response = requestExtenedPanId(request);
 					}
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -184,15 +187,25 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 
 	}
 
-	public NetworkLayerNode(Traceable traceableDevice) throws IOException {
+
+
+	public NetworkLayerNode(Traceable traceableDevice, DeviceLog log) throws IOException {
+		random = new Random();
 		this.traceableDevice = traceableDevice;
 		isListening = false;
 		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 		macInterfaceClient = new MacLayerInterfaceClient(traceableDevice,log);
-	}
-
-	public NetworkLayerNode(Traceable traceableDevice, DeviceLog log) throws IOException {
-		this(traceableDevice);
+		networkClient = new NerworkLayerInterfaceClient(traceableDevice, log);
+		
+		NetworlLayerRequest request = new NetworlLayerRequest();
+		request.setDevice(traceableDevice);
+		
+		NetworkLayerResponse response = networkClient.requestExtenedPanId(request);
+		if(response.getConfirm()==CONFIRM.INVALID_REQUEST) {
+			extendedPANId = 0;
+		}else {
+			extendedPANId = response.getExtendedPANID();
+		}
 		this.log = log;
 		macInterfaceClient.setLog(log);
 	}
@@ -203,8 +216,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		byte[] buf = null;
 		isListening = true;
 		try {
-			macLayerNode = new MacLayerNode(traceableDevice,log);
-			requestExecutor.execute(macLayerNode);
+			
 			socket = new MulticastSocket(NETWORK_LAYER_PORT);
 			group = InetAddress.getByName(NETWORK_LAYER_ADDRESS);
 			socket.joinGroup(group);
@@ -237,7 +249,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		log.debug(new DeviceData(traceableDevice.getId(),
 				"Stopping Network Layer Node on " + NETWORK_LAYER_ADDRESS + ":"
 						+ NETWORK_LAYER_PORT));
-		macLayerNode.stop();
+		
 		tcpNetworkRequestConnection.stop();
 		requestExecutor.shutdownNow();
 		isListening = false;
@@ -256,23 +268,68 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			response.setMessage("Device("+request.getDevice().getId()+") is not a coordinator");
 			return response;
 		}
-		
+		Traceable device=request.getDevice();
 		MacLayerRequest macRequest = new MacLayerRequest();
-		macRequest.setDevice(request.getDevice());
+		macRequest.setDevice(device);
 		MacLayerResponse macResponse = macInterfaceClient.energyDetectionScan(macRequest);
 		if(macResponse.getConfirm() != MacLayerResponse.CONFIRM.SUCCESS) {
 			response.setMessage(macResponse.getMessage());
 			return response;
 		}
 		
-		Map<RF_CHANNEL, RFChannel> acceptableChannels = macResponse.getChannels();
-		macRequest.setActiveChannels(new ArrayList<RFChannel.RF_CHANNEL>(acceptableChannels.keySet()));
+		List<RFChannel>acceptableChannels = macResponse.getChannels();
+		macRequest.setActiveChannels(new ArrayList<RFChannel>(acceptableChannels));
 		macResponse = macInterfaceClient.activeScan(macRequest);
+		Map<RFChannel, List<Traceable>> registeredDevices = macResponse.getRegisteredDevices();
+		RFChannel selectedChannel = getMinDevicesChannel(registeredDevices);
+		if(selectedChannel==null) {
+			response.setConfirm(CONFIRM.STARTUP_FAILURE);
+			response.setMessage("Not able to find a suitable channel");
+			return response;
+		}
+		int panId = createPanID(registeredDevices.get(selectedChannel));
+		device.setPanId(panId);
+		macRequest.setDevice(device);
+		macRequest.setChannel(selectedChannel); 
+		macResponse = macInterfaceClient.setPANId(macRequest);
 		
-		RF_CHANNEL selectedChannel = null;
+		if(extendedPANId==0) {
+			macResponse = macInterfaceClient.getExtendedAddress(macRequest);
+			extendedPANId = macResponse.getExtendedAddress();
+		}
+		
+		macResponse = macInterfaceClient.start(macRequest);
+		if(macResponse.getConfirm() == MacLayerResponse.CONFIRM.STARTUP_FAILURE) {
+			response.setConfirm(CONFIRM.STARTUP_FAILURE);
+			response.setMessage("Unable to start a network");
+			return response;
+		}
+		response.setConfirm(CONFIRM.SUCCESS);
+		return response;
+	}
+	
+	private int createPanID(List<Traceable> devices) {
+		boolean validPanID = true;
+		int panID = -1;
+		do {
+			panID = random.nextInt(65535);
+			if(devices!=null && !devices.isEmpty()) {
+				for(Traceable device:devices) {
+					if(device.getPanId()==panID) {
+						validPanID = false;
+						break;
+					}
+				}
+			}
+		}while(!validPanID);
+		return panID;
+	}
+
+	
+	private RFChannel getMinDevicesChannel(Map<RFChannel, List<Traceable>> registeredDevices) {
+		RFChannel selectedChannel = null;
 		int minDevices = 0;
-		Map<RF_CHANNEL, List<Traceable>> registeredDevices = macResponse.getRegisteredDevices();
-		for(RF_CHANNEL channel:registeredDevices.keySet()) {
+		for(RFChannel channel:registeredDevices.keySet()) {
 			if(selectedChannel==null) {
 				selectedChannel = channel;
 			}else {
@@ -282,9 +339,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 				}
 			}	
 		}
-		
-		response.setMessage("Not implemented");
-		return response;
+		return selectedChannel;
 	}
 
 	@Override
@@ -308,6 +363,15 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
 						+ "'), available Network Node"));
+		return response;
+	}
+
+	@Override
+	public NetworkLayerResponse requestExtenedPanId(NetworlLayerRequest request) {
+		NetworkLayerResponse response = new NetworkLayerResponse();
+		response.setConfirm(CONFIRM.SUCCESS);
+		response.setMessage("");
+		response.setExtendedPANID(extendedPANId);
 		return response;
 	}
 

@@ -3,6 +3,7 @@ package com.uag.sd.weathermonitor.model.layer.network;
 import java.io.Serializable;
 
 import com.uag.sd.weathermonitor.model.device.Device;
+import com.uag.sd.weathermonitor.model.device.Traceable;
 
 public class NetworlLayerRequest implements Serializable {
 
@@ -13,7 +14,7 @@ public class NetworlLayerRequest implements Serializable {
 
 	public enum PRIMITIVE {
 		REQUEST_NETWORK_FORMATION("Network Formation"), REQUEST_NETWORK_NODE(
-				"Network Node");
+				"Network Node"),REQUEST_EXTENDED_PAN_ID("Extened PAN ID");
 		public String description;
 
 		private PRIMITIVE(String description) {
@@ -22,7 +23,7 @@ public class NetworlLayerRequest implements Serializable {
 	};
 
 	private PRIMITIVE primitive;
-	private Device device;
+	private Traceable device;
 	private long id;
 
 	public NetworlLayerRequest() {
@@ -42,11 +43,11 @@ public class NetworlLayerRequest implements Serializable {
 		this.primitive = primitive;
 	}
 
-	public Device getDevice() {
+	public Traceable getDevice() {
 		return device;
 	}
 
-	public void setDevice(Device device) {
+	public void setDevice(Traceable device) {
 		this.device = device;
 	}
 

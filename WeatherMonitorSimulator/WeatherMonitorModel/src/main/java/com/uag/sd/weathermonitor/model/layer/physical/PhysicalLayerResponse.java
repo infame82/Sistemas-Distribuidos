@@ -1,10 +1,9 @@
 package com.uag.sd.weathermonitor.model.layer.physical;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
 
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
-import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 
 
 public class PhysicalLayerResponse implements Serializable{
@@ -19,7 +18,7 @@ public class PhysicalLayerResponse implements Serializable{
 	
 	private CONFIRM confirm;
 	private String message;
-	private Map<RF_CHANNEL,RFChannel> channels;
+	private List<RFChannel> channels;
 	public CONFIRM getConfirm() {
 		return confirm;
 	}
@@ -32,10 +31,10 @@ public class PhysicalLayerResponse implements Serializable{
 	public void setMessage(String message) {
 		this.message = message;
 	}
-	public Map<RF_CHANNEL, RFChannel> getChannels() {
+	public List<RFChannel> getChannels() {
 		return channels;
 	}
-	public void setChannels(Map<RF_CHANNEL, RFChannel> channels) {
+	public void setChannels(List<RFChannel> channels) {
 		this.channels = channels;
 	}
 	

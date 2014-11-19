@@ -247,7 +247,7 @@ public class SensorNetworkSimGUI {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					EndpointDialogGUI dialog = new EndpointDialogGUI(null,
-							endpointTableModel, sensorLog);
+							endpointTableModel, sensorLog,endpointLog);
 					dialog.setTitle("Add Endpoint");
 					dialog.setVisible(true);
 				} catch (Exception ex) {
@@ -263,7 +263,7 @@ public class SensorNetworkSimGUI {
 					ZigBeeDevice zigBeeDevice = endpointTableModel
 							.getEndpoint(endPointsTable.getSelectedRow());
 					EndpointDialogGUI dialog = new EndpointDialogGUI(
-							zigBeeDevice, endpointTableModel, sensorLog);
+							zigBeeDevice, endpointTableModel, sensorLog,endpointLog);
 					dialog.setTitle("Edit Endpoint");
 					dialog.setVisible(true);
 				} catch (Exception ex) {

@@ -4,8 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.io.IOException;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -42,6 +41,7 @@ public class EndpointDialogGUI extends JDialog {
 	private ZigBeeDevice zigBeeDevice;
 	private EndpointTableModel tableModel;
 	private DeviceLog sensorLog;
+	private DeviceLog deviceLog;
 
 	/**
 	 * Launch the application.
@@ -55,11 +55,12 @@ public class EndpointDialogGUI extends JDialog {
 		}
 	}
 
-	public EndpointDialogGUI(ZigBeeDevice zigBeeDevice,EndpointTableModel tableModel,DeviceLog sensorLog) {
+	public EndpointDialogGUI(ZigBeeDevice zigBeeDevice,EndpointTableModel tableModel,DeviceLog sensorLog,DeviceLog deviceLog) {
 		this();
 		this.zigBeeDevice = zigBeeDevice;
 		this.tableModel = tableModel;
 		this.sensorLog = sensorLog;
+		this.deviceLog = deviceLog;
 		if(zigBeeDevice!=null) {
 			idField.setText(zigBeeDevice.getId());
 			idField.setEnabled(false);
@@ -231,8 +232,8 @@ public class EndpointDialogGUI extends JDialog {
 						
 						if(zigBeeDevice==null) {
 							try {
-								zigBeeDevice = new ZigBeeDevice();
-							} catch (SocketException | UnknownHostException e1) {
+								zigBeeDevice = new ZigBeeDevice(idField.getText(),sensorLog,deviceLog);
+							} catch ( IOException e1) {
 								JOptionPane.showMessageDialog(EndpointDialogGUI.this, e1.getMessage());
 								return;
 							}

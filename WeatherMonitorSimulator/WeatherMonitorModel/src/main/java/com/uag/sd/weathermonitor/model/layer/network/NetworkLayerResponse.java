@@ -14,6 +14,8 @@ public class NetworkLayerResponse implements Serializable{
 	
 	private CONFIRM confirm;
 	private String message;
+	private long extendedPANID;
+	
 	public CONFIRM getConfirm() {
 		return confirm;
 	}
@@ -25,6 +27,12 @@ public class NetworkLayerResponse implements Serializable{
 	}
 	public void setMessage(String message) {
 		this.message = message;
+	}
+	public long getExtendedPANID() {
+		return extendedPANID;
+	}
+	public void setExtendedPANID(long extendedPANID) {
+		this.extendedPANID = extendedPANID;
 	}
 	
 	

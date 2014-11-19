@@ -1,5 +1,6 @@
 package com.uag.sd.weathermonitor.model.endpoint;
 
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -33,18 +34,10 @@ public class ZigBeeDevice extends Device implements SensorMonitor {
 	private transient Integer threadPoolSize;
 	private transient DeviceLog sensorLog;
 
-	public ZigBeeDevice() throws SocketException, UnknownHostException  {
-		super();
-		threadPoolSize = 50;
-		executorService = (ThreadPoolExecutor) Executors
-				.newFixedThreadPool(threadPoolSize);
+	public ZigBeeDevice(String id, DeviceLog sensorLog, DeviceLog log) throws IOException  {
+		super(id,log);
+		executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 		sensors = new ArrayList<Sensor>();
-		zigBeeRouters = new LinkedHashMap<String, ZigBeeRouter>();
-		sensorLog = new DefaultDeviceLog();
-	}
-
-	public ZigBeeDevice(String id, DeviceLog sensorLog, DeviceLog log) throws SocketException, UnknownHostException  {
-		this();
 		this.id = id;
 		this.sensorLog = sensorLog;
 		this.log = log;

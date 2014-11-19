@@ -64,7 +64,7 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 				socket.setSoTimeout(REQUEST_TIME_OUT);
 				DatagramPacket reply = null;
 				try {
-					while (true) {
+					//while (true) {
 						reply = new DatagramPacket(new byte[BUFFER_SIZE],
 								BUFFER_SIZE);
 						socket.receive(reply);
@@ -74,7 +74,7 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 						if (availableNode) {
 							break mainLoop;
 						}
-					}
+				//	}
 				} catch (SocketTimeoutException ste) {
 					log.debug(new DeviceData(device.getId(),
 							"Physical layer node not available (" + counter + ")"));
@@ -169,8 +169,7 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 	public PhysicalLayerResponse increaseEnergyLevel(
 			PhysicalLayerRequest request) {
 		PhysicalLayerResponse response = new PhysicalLayerResponse();
-		response.setConfirm(CONFIRM.INVALID_REQUEST);
-		response.setMessage("Unknown");
+		response.setConfirm(CONFIRM.SUCCESS);
 		request.setResponseRequired(false);
 		request.setId(System.currentTimeMillis());
 		request.setDevice(device);
@@ -183,14 +182,14 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 					requestContent.length, group, PHYSICAL_LAYER_PORT);
 			socket.send(packet);
 		}catch(Exception e) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
 			response.setMessage("Unable to increase energy");
 		} finally {
 			if (socket != null) {
 				socket.close();
 			}
 		}
-		
-		return sendRequest(request, PRIMITIVE.INCREASE_ENERGY_LEVEL);
+		return response;
 	}
 
 }

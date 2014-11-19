@@ -1,5 +1,6 @@
 package com.uag.sd.weathermonitor.model.router;
 
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
@@ -23,21 +24,9 @@ public class ZigBeeRouter extends Device {
 	protected transient Map<String, Device> zigBeeDevices;
 	protected transient Map<String, Device> zigBeeRouters;
 
-	public ZigBeeRouter() throws SocketException, UnknownHostException {
-		super();
-		zigBeeDevices = new LinkedHashMap<String, Device>();
-		zigBeeRouters = new LinkedHashMap<String, Device>();
-	}
-	
-	public ZigBeeRouter(String id) throws SocketException, UnknownHostException  {
-		this();
-		this.id = id;
-	}
 
-
-	public ZigBeeRouter(String id, DeviceLog log) throws SocketException, UnknownHostException  {
-		this(id);
-		this.log = log;
+	public ZigBeeRouter(String id, DeviceLog log) throws IOException  {
+		super(id,log);
 	}
 
 	public Map<String, Device> getEndpoints() {

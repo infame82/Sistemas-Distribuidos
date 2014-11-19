@@ -45,5 +45,17 @@ public class RFChannel implements Serializable{
 		this.energy = energy;
 	}
 	
+	@Override
+	public boolean equals(Object o) {
+		if(o==null || !(o instanceof RFChannel)) {
+			return false;
+		}
+		RFChannel auxChannel = (RFChannel) o;
+		return auxChannel.channel == this.channel;
+	}
 	
+	@Override
+	public int hashCode() {
+		return channel.hashCode();
+	}
 }

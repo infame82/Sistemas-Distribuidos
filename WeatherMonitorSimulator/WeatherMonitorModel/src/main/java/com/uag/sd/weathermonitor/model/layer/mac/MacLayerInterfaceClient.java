@@ -11,12 +11,12 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
-import com.uag.sd.weathermonitor.model.device.Device;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.Traceable;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse.CONFIRM;
+import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
 public class MacLayerInterfaceClient implements MacLayerInterface {
@@ -63,7 +63,7 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 				socket.setSoTimeout(REQUEST_TIME_OUT);
 				DatagramPacket reply = null;
 				try {
-					while (true) {
+					//while (true) {
 						reply = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
 						socket.receive(reply);
 						response = (MacLayerResponse) ObjectSerializer
@@ -72,14 +72,14 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 						if (availableNode) {
 							break mainLoop;
 						}
-					}
+			//		}
 				} catch (SocketTimeoutException ste) {
 					
-					log.debug(new DeviceData(device.getId(), "Network layer node not available ("+counter+""));
+					log.debug(new DeviceData(device.getId(), "MAC layer node not available ("+counter+")"));
 					
 				}
 				if(counter==MAX_REQUEST) {
-					response.setMessage("Not able to find an available node");
+					response.setMessage("Not able to find an available mac node");
 					break;
 				}
 			}
@@ -161,17 +161,66 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 
 	@Override
 	public MacLayerResponse setPANId(MacLayerRequest request) {
-		return sendRequest(request, PRIMITIVE.SET_PAN_ID);
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.SUCCESS);
+		request.setResponseRequired(false);
+		request.setId(System.currentTimeMillis());
+		request.setDevice(device);
+		request.setPrimitive(PRIMITIVE.SET_PAN_ID);
+		DatagramSocket socket = null;
+		try {
+			socket = new DatagramSocket();
+			byte[] requestContent = ObjectSerializer.serialize(request);
+			DatagramPacket packet = new DatagramPacket(requestContent,
+					requestContent.length, group, MAC_LAYER_PORT);
+			socket.send(packet);
+		}catch(Exception e) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			response.setMessage("Unable to SET PAN ID");
+		} finally {
+			if (socket != null) {
+				socket.close();
+			}
+		}
+		
+		return response;
 	}
 
 	@Override
 	public MacLayerResponse start(MacLayerRequest request) {
-		return sendRequest(request, PRIMITIVE.START);
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.SUCCESS);
+		request.setResponseRequired(false);
+		request.setId(System.currentTimeMillis());
+		request.setDevice(device);
+		request.setPrimitive(PRIMITIVE.START);
+		DatagramSocket socket = null;
+		try {
+			socket = new DatagramSocket();
+			byte[] requestContent = ObjectSerializer.serialize(request);
+			DatagramPacket packet = new DatagramPacket(requestContent,
+					requestContent.length, group, MAC_LAYER_PORT);
+			socket.send(packet);
+		}catch(Exception e) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			response.setMessage("Unable to START NETWORK");
+		} finally {
+			if (socket != null) {
+				socket.close();
+			}
+		}
+		
+		return response;
 	}
 
 	@Override
 	public MacLayerResponse getRegisteredDevices(MacLayerRequest request) {
 		return sendRequest(request, PRIMITIVE.REQUEST_REGISTERED_DEVICES);
+	}
+
+	@Override
+	public MacLayerResponse getExtendedAddress(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.REQUEST_EXTENED_ADDRESS);
 	}
 	
 	
