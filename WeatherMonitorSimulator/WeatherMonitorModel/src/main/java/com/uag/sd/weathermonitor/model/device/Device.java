@@ -3,8 +3,8 @@ package com.uag.sd.weathermonitor.model.device;
 import java.awt.Point;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -16,6 +16,7 @@ import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse.CONFIR
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerNode;
+import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 
 public abstract class Device implements Serializable,Runnable,Traceable{
 	/**
@@ -26,6 +27,8 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 	
 	protected String id;
 	protected int panID;
+	protected long extendedPanID;
+	
 	protected int coverage;
 	protected int operatingChannel;
 	protected boolean coordinator;
@@ -51,18 +54,21 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		started = false;
 		coverage = 5;
 		location = new Point();
-		log = new DefaultDeviceLog();
+		//log = new DefaultDeviceLog();
 		layerPoolExecutor = (ThreadPoolExecutor) Executors
 				.newFixedThreadPool(10);
 		
 		physicalNode = new PhysicalLayerNode(this,log);
-		layerPoolExecutor.execute(physicalNode);	
+		layerPoolExecutor.execute(physicalNode);
+		physicalNode.init();
 		
 		macLayerNode = new MacLayerNode(this,log);
 		layerPoolExecutor.execute(macLayerNode);
+		macLayerNode.init();
 		
 		networkLayerNode = new NetworkLayerNode(this,log);
 		layerPoolExecutor.execute(networkLayerNode);
+		networkLayerNode.init();
 		
 		networkInterfaceClient = new NerworkLayerInterfaceClient(this,log);
 		
@@ -100,7 +106,7 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		active = false;
 	}
 	
-	public boolean establishNetwork() {
+	public boolean networkFormation() {
 		NetworlLayerRequest request = new NetworlLayerRequest(PRIMITIVE.REQUEST_NETWORK_FORMATION,this);
 		NetworkLayerResponse response = networkInterfaceClient.requestNetworkFormation(request);
 		if(response.getConfirm() == CONFIRM.INVALID_REQUEST) {
@@ -109,6 +115,16 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		}
 		setStarted(true);
 		return true;
+	}
+	
+	public Map<RFChannel, List<Traceable>> networkDiscovery() {
+		NetworlLayerRequest request = new NetworlLayerRequest(PRIMITIVE.NETWORK_DISCOVERY,this);
+		NetworkLayerResponse response = networkInterfaceClient.networkDiscovery(request);
+		if(response.getConfirm() == CONFIRM.INVALID_REQUEST) {
+			log.debug(new DeviceData(id,response.getMessage()));
+			return null;
+		}
+		return response.getAvailableNetworks();
 	}
 	
 	protected abstract void init();
@@ -186,6 +202,14 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 
 	public void setStarted(boolean started) {
 		this.started = started;
+	}
+	
+	public long getExtendedPanID() {
+		return extendedPanID;
+	}
+	
+	public void setExtendedPanID(long extendedPanID) {
+		this.extendedPanID = extendedPanID;
 	}
 	
 

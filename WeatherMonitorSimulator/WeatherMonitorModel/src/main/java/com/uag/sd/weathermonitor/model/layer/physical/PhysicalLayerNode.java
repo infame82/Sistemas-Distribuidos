@@ -199,6 +199,10 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 		this.log = log;
 		physicalClient = new PhysicalLayerInterfaceClient(traceableDevice,log);
+		
+	}
+	
+	public void init() {
 		PhysicalLayerRequest physicalRequest = new PhysicalLayerRequest();
 		physicalRequest.setDevice(traceableDevice);
 		PhysicalLayerResponse response = physicalClient.getChannels(physicalRequest);
@@ -221,8 +225,6 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 		}else {
 			channels = response.getChannels();
 		}
-		
-		
 	}
 
 	@Override
@@ -259,7 +261,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 			group = InetAddress.getByName(PHYSICAL_LAYER_ADDRESS);
 			socket.joinGroup(group);
 			log.debug(new DeviceData(traceableDevice.getId(),
-					"Physical Layer Node has started to listen Multicast Socket on" + PHYSICAL_LAYER_ADDRESS
+					"Physical Layer Node has started to listen Multicast Socket on: " + PHYSICAL_LAYER_ADDRESS
 							+ ":" + PHYSICAL_LAYER_PORT));
 			tcpPhysicalRequestConnection = new TcpPhysicalRequestConnection();
 			energyLevelStabilizer = new EnergyLevelStabilizer();
@@ -298,7 +300,12 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 	@Override
 	public synchronized PhysicalLayerResponse getChannels(PhysicalLayerRequest request) {
 		PhysicalLayerResponse response = new PhysicalLayerResponse();
-		response.setConfirm(CONFIRM.SUCCESS);
+		if(channels==null) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+		}else {
+			response.setConfirm(CONFIRM.SUCCESS);
+		}
+		
 		response.setMessage("");
 		response.setChannels(channels);
 		return response;

@@ -59,7 +59,7 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 					requestContent.length, group, PHYSICAL_LAYER_PORT);
 			mainLoop: while (!availableNode) {
 				log.debug(new DeviceData(device.getId(),
-						"Requesting physical layer node (" + counter + ")"));
+						request.getId()+": Requesting physical layer node (" + counter + ")"));
 				socket.send(packet);
 				socket.setSoTimeout(REQUEST_TIME_OUT);
 				DatagramPacket reply = null;
@@ -99,7 +99,7 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 		}
 		if (availableNode) {
 			log.debug(new DeviceData(device.getId(),
-					"Available network layer node :" + response.getMessage()));
+					"Available Physical layer node: " + response.getMessage()));
 		}
 		return response;
 	}

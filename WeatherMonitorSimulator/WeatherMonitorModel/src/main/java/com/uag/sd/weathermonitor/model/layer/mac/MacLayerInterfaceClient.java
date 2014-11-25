@@ -16,7 +16,6 @@ import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.Traceable;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse.CONFIRM;
-import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
 public class MacLayerInterfaceClient implements MacLayerInterface {
@@ -165,7 +164,6 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 		response.setConfirm(CONFIRM.SUCCESS);
 		request.setResponseRequired(false);
 		request.setId(System.currentTimeMillis());
-		request.setDevice(device);
 		request.setPrimitive(PRIMITIVE.SET_PAN_ID);
 		DatagramSocket socket = null;
 		try {
@@ -192,7 +190,7 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 		response.setConfirm(CONFIRM.SUCCESS);
 		request.setResponseRequired(false);
 		request.setId(System.currentTimeMillis());
-		request.setDevice(device);
+		//request.setDevice(device);
 		request.setPrimitive(PRIMITIVE.START);
 		DatagramSocket socket = null;
 		try {

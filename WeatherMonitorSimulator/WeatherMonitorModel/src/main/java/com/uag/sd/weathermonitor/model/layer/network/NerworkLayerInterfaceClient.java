@@ -170,4 +170,9 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 		return sendRequest(request, PRIMITIVE.REQUEST_EXTENDED_PAN_ID);
 	}
 
+	@Override
+	public NetworkLayerResponse networkDiscovery(NetworlLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.NETWORK_DISCOVERY);
+	}
+
 }

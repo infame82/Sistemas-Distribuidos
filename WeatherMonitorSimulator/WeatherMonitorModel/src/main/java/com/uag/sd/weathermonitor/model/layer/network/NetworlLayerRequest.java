@@ -14,7 +14,7 @@ public class NetworlLayerRequest implements Serializable {
 
 	public enum PRIMITIVE {
 		REQUEST_NETWORK_FORMATION("Network Formation"), REQUEST_NETWORK_NODE(
-				"Network Node"),REQUEST_EXTENDED_PAN_ID("Extened PAN ID");
+				"Network Node"),REQUEST_EXTENDED_PAN_ID("Extened PAN ID"),NETWORK_DISCOVERY("Network Discovery");
 		public String description;
 
 		private PRIMITIVE(String description) {

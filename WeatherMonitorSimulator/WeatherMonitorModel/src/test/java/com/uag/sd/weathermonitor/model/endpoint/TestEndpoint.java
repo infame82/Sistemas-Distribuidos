@@ -1,6 +1,8 @@
 package com.uag.sd.weathermonitor.model.endpoint;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -13,7 +15,8 @@ import org.testng.annotations.Test;
 
 import com.uag.sd.weathermonitor.model.device.DefaultDeviceLog;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.router.ZigBeeRouter;
+import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 
 @ContextConfiguration(locations = { "classpath:META-INF/spring/spring-ctx.xml" })
@@ -30,7 +33,8 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 	
 	//@Autowired
 	//@Qualifier("zigBeeDevice")
-	private ZigBeeDevice zigBeeDevice;
+	private ZigBeeDevice coordinator;
+	private ZigBeeDevice endpoint;
 	
 	//@Autowired
 	//@Qualifier("zigBeeRouter")
@@ -45,11 +49,15 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 		tSensor.setId("T1");
 		hSensor.setLapse(2000);
 		hSensor.setId("H1");
-		DeviceLog log = new DefaultDeviceLog();
-		zigBeeDevice = new ZigBeeDevice("ZigBee Device", log, log);
-		zigBeeDevice.addSensor(tSensor);
-		zigBeeDevice.addSensor(hSensor);
-		zigBeeDevice.setActive(true);
+		DeviceLog coordinatorLog = new DefaultDeviceLog();
+		DeviceLog endpointLog = new DefaultDeviceLog();
+		coordinator = new ZigBeeDevice("ZigBee Device Coordinator", coordinatorLog, coordinatorLog);
+		endpoint = new ZigBeeDevice("ZigBee Device Endpoint", endpointLog, endpointLog);
+		//zigBeeDevice.addSensor(tSensor);
+		//zigBeeDevice.addSensor(hSensor);
+		//coordinator.setActive(true);
+		coordinator.setCoordinator(true);
+		endpoint.setCoordinator(false);
 		
 		//zigBeeRouter.setId("ZibBee Router");
 		//zigBeeRouter.setActive(true);
@@ -57,15 +65,18 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 	
 	@Test
 	public void testEndpoint() throws InterruptedException {
-		service.execute(zigBeeDevice);
+		service.execute(coordinator);
+		service.execute(endpoint);
 		//service.execute(zigBeeRouter);
 		Thread.sleep(3000);
-		zigBeeDevice.setCoordinator(true);
-		zigBeeDevice.establishNetwork();
+		
+		coordinator.networkFormation();
+		Map<RFChannel, List<Traceable>> availableNetworksMap = endpoint.networkDiscovery();
 		//zigBeeRouter.setCoordinator(true);
 		//zigBeeRouter.establishNetwork();
 		Thread.sleep(20000);
-		zigBeeDevice.stop();
+		coordinator.stop();
+		endpoint.stop();
 		//zigBeeRouter.stop();
 		Thread.sleep(5000);
 	}

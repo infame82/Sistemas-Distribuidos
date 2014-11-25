@@ -8,11 +8,12 @@ public interface Traceable extends Serializable {
 	String getId();
 	int getPanId();
 	void setPanId(int panId);
+	
+	long getExtendedPanID();
+	void setExtendedPanID(long extendedPanID);
+	
 	Point getLocation();
 	boolean isCoordinator();
-	
 	public boolean isStarted();
-
-
 	public void setStarted(boolean started);
 }

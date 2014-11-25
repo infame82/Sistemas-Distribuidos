@@ -96,6 +96,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 				response = requestMacLayerNode(request);
 			}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.SET_PAN_ID) {
 				response = setPANId(request);
+				
 			}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.START) {
 				response = start(request);
 			}
@@ -215,6 +216,10 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		physicalClient = new PhysicalLayerInterfaceClient(traceableDevice,log);
 		macClient = new MacLayerInterfaceClient(traceableDevice, log);
 		
+				
+	}
+	
+	public void init() {
 		MacLayerRequest macRequest = new MacLayerRequest();
 		macRequest.setDevice(traceableDevice);
 		MacLayerResponse response = macClient.getRegisteredDevices(macRequest);
@@ -228,7 +233,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 			extendedAddress = new Random().nextLong();
 		}else {
 			extendedAddress = response.getExtendedAddress();
-		}		
+		}
 	}
 
 	@Override
@@ -369,7 +374,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		response.setMessage("OK");
 		Map<RFChannel,List<Traceable>> registeredDevices = new HashMap<RFChannel, List<Traceable>>();
 		for(RFChannel channel:request.getActiveChannels()) {
-			registeredDevices.put(channel,registeredDevices.get(channel));
+			registeredDevices.put(channel,this.registeredDevices.get(channel));
 		}
 		response.setRegisteredDevices(registeredDevices);
 		return response;
@@ -385,8 +390,10 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		List<Traceable> devices = registeredDevices.get(request.getChannel());
 		if(devices == null) {
 			devices = new ArrayList<Traceable>();
-			devices.add(request.getDevice());
 		}
+		log.debug(new DeviceData(traceableDevice.getId(), "Registering device:"+request.getDevice().getId()));
+		devices.add(request.getDevice());
+		
 		registeredDevices.put(request.getChannel(), devices);
 		return response;
 	}
@@ -399,6 +406,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		List<Traceable> devices = registeredDevices.get(request.getChannel());
 		for(Traceable device:devices) {
 			if(device.getId().equals(request.getDevice().getId()) && device.getPanId()== request.getDevice().getPanId()) {
+				device.setExtendedPanID(request.getDevice().getExtendedPanID());
 				device.setStarted(true);
 				break;
 			}
@@ -421,9 +429,12 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 	@Override
 	public MacLayerResponse getExtendedAddress(MacLayerRequest request) {
 		MacLayerResponse response = new MacLayerResponse();
-		response.setConfirm(CONFIRM.SUCCESS);
-		response.setMessage("");
-		response.setExtendedAddress(extendedAddress);
+		if(extendedAddress==0) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+		}else {
+			response.setConfirm(CONFIRM.SUCCESS);
+			response.setExtendedAddress(extendedAddress);
+		}
 		return response;
 	}
 
