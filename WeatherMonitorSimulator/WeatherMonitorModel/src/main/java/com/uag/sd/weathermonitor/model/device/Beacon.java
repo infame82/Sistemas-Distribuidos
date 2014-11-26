@@ -13,6 +13,7 @@ public interface Beacon extends Serializable {
 	void setExtendedPanID(long extendedPanID);
 	
 	Point getLocation();
+	int getPotency() ;
 	boolean isCoordinator();
 	boolean isRouter();
 	boolean isEndpoint();

@@ -1,5 +1,6 @@
 package com.uag.sd.weathermonitor.model.endpoint;
 
+import java.awt.Point;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +64,11 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 		endpoint.setAllowJoin(false);
 		//zigBeeRouter.setId("ZibBee Router");
 		//zigBeeRouter.setActive(true);
+	}
+	
+	public static boolean isCovered(Point a,int pA,Point b,int pB) {
+		
+		return false;
 	}
 	
 	@Test

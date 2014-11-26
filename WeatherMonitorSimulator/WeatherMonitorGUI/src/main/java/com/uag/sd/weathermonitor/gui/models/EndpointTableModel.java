@@ -48,7 +48,7 @@ public class EndpointTableModel extends AbstractTableModel{
 		case 1:
 			return "X: "+zigBeeDevice.getLocation().getX()+", Y: "+zigBeeDevice.getLocation().getY();
 		case 2:
-			return zigBeeDevice.getCoverage();
+			return zigBeeDevice.getPotency();
 		case 3:
 			return zigBeeDevice.isActive()?"Active":"Inactive";
 		}

@@ -51,7 +51,7 @@ public class EndpointRouterTableModel extends AbstractTableModel{
 		case 1:
 			return  "X: "+zigBeeRouter.getLocation().getX()+", Y: "+zigBeeRouter.getLocation().getY();
 		case 2:
-			return zigBeeRouter.getCoverage();
+			return zigBeeRouter.getPotency();
 		}
 		return null;
 	}

@@ -17,7 +17,6 @@ import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerNode;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
-import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 
 public abstract class Device implements Serializable,Runnable,Beacon{
 	/**

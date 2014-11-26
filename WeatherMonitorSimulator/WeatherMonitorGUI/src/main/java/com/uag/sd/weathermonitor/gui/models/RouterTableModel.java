@@ -49,7 +49,7 @@ public class RouterTableModel extends AbstractTableModel{
 		case 1:
 			return "X: "+zigBeeRouter.getLocation().getX()+", Y: "+zigBeeRouter.getLocation().getY();
 		case 2:
-			return zigBeeRouter.getCoverage();
+			return zigBeeRouter.getPotency();
 		case 3:
 			return zigBeeRouter.isActive()?"Active":"Inactive";
 		}

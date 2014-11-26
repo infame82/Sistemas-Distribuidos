@@ -64,7 +64,7 @@ public class EndpointDialogGUI extends JDialog {
 		if(zigBeeDevice!=null) {
 			idField.setText(zigBeeDevice.getId());
 			idField.setEnabled(false);
-			coverageField.getModel().setValue(zigBeeDevice.getCoverage());
+			coverageField.getModel().setValue(zigBeeDevice.getPotency());
 			positionXField.getModel().setValue( new Double(zigBeeDevice.getLocation().getX()).intValue());
 			positionYField.getModel().setValue( new Double(zigBeeDevice.getLocation().getY()).intValue());
 			activeBox.setSelected(zigBeeDevice.isActive());
@@ -243,7 +243,7 @@ public class EndpointDialogGUI extends JDialog {
 						}
 						boolean prevState = zigBeeDevice.isActive();
 						zigBeeDevice.setId(idField.getText());
-						zigBeeDevice.setCoverage((int)coverageField.getModel().getValue());
+						zigBeeDevice.setPotency((int)coverageField.getModel().getValue());
 						zigBeeDevice.setLocation((int)positionXField.getModel().getValue(),
 								(int)positionYField.getModel().getValue());
 						zigBeeDevice.setActive(activeBox.isSelected());
