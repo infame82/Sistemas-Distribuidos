@@ -13,6 +13,7 @@ public interface MacLayerInterface {
 	MacLayerResponse energyDetectionScan(MacLayerRequest request);
 	MacLayerResponse activeScan(MacLayerRequest request);
 	MacLayerResponse setPANId(MacLayerRequest request);
+	MacLayerResponse association(MacLayerRequest request);
 	MacLayerResponse start(MacLayerRequest request);
 	
 	MacLayerResponse getRegisteredDevices(MacLayerRequest request);

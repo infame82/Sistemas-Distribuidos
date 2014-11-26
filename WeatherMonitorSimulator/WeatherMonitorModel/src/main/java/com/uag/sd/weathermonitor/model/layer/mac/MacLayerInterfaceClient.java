@@ -13,7 +13,7 @@ import java.net.UnknownHostException;
 
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
@@ -22,9 +22,9 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 
 	private InetAddress group;
 	private DeviceLog log;
-	private Traceable device;
+	private Beacon device;
 
-	public MacLayerInterfaceClient(Traceable device, DeviceLog log)
+	public MacLayerInterfaceClient(Beacon device, DeviceLog log)
 			throws SocketException, UnknownHostException {
 		this.log = log;
 		this.device = device;
@@ -99,7 +99,7 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 		return response;
 	}
 	
-	private Socket getMacLayerSocket(Traceable device) throws NumberFormatException, UnknownHostException, IOException {
+	private Socket getMacLayerSocket(Beacon device) throws NumberFormatException, UnknownHostException, IOException {
 		MacLayerRequest requestNode = new MacLayerRequest();
 		requestNode.setDevice(device);
 		MacLayerResponse response = requestMacLayerNode(requestNode);
@@ -219,6 +219,11 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 	@Override
 	public MacLayerResponse getExtendedAddress(MacLayerRequest request) {
 		return sendRequest(request, PRIMITIVE.REQUEST_EXTENED_ADDRESS);
+	}
+
+	@Override
+	public MacLayerResponse association(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.ASSOCIATION);
 	}
 	
 	

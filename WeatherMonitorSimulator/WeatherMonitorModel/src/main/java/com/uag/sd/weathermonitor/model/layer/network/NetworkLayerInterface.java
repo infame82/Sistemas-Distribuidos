@@ -13,7 +13,10 @@ public interface NetworkLayerInterface {
 	NetworkLayerResponse requestNetworkFormation(NetworlLayerRequest request);
 	NetworkLayerResponse requestNetworkLayerNode(NetworlLayerRequest request);
 	NetworkLayerResponse networkDiscovery(NetworlLayerRequest request);
+	NetworkLayerResponse netoworkJoin(NetworlLayerRequest request);
+	
 	
 	NetworkLayerResponse requestExtenedPanId(NetworlLayerRequest request);
+	
 
 }

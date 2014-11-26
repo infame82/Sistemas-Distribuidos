@@ -13,7 +13,7 @@ import java.net.UnknownHostException;
 
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
@@ -22,9 +22,9 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 	
 	private InetAddress group;
 	private DeviceLog log;
-	private Traceable device;
+	private Beacon device;
 
-	public PhysicalLayerInterfaceClient(Traceable device, DeviceLog log)
+	public PhysicalLayerInterfaceClient(Beacon device, DeviceLog log)
 			throws SocketException, UnknownHostException {
 		this.log = log;
 		this.device = device;
@@ -104,7 +104,7 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 		return response;
 	}
 	
-	private Socket getPhysicalLayerSocket(Traceable device)
+	private Socket getPhysicalLayerSocket(Beacon device)
 			throws NumberFormatException, UnknownHostException, IOException {
 		PhysicalLayerRequest requestNode = new PhysicalLayerRequest();
 		requestNode.setDevice(device);

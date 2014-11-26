@@ -17,8 +17,9 @@ import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerNode;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
+import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 
-public abstract class Device implements Serializable,Runnable,Traceable{
+public abstract class Device implements Serializable,Runnable,Beacon{
 	/**
 	 * 
 	 */
@@ -29,10 +30,13 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 	protected int panID;
 	protected long extendedPanID;
 	
-	protected int coverage;
+	protected int potency;
 	protected int operatingChannel;
 	protected boolean coordinator;
+	protected boolean router;
+	protected boolean endpoint;
 	protected boolean active;
+	protected boolean allowJoin;
 	protected Point location;
 	protected boolean started;
 	
@@ -52,7 +56,7 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		coordinator = false;
 		active = false;
 		started = false;
-		coverage = 5;
+		potency = 5;
 		location = new Point();
 		//log = new DefaultDeviceLog();
 		layerPoolExecutor = (ThreadPoolExecutor) Executors
@@ -117,7 +121,7 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		return true;
 	}
 	
-	public Map<RFChannel, List<Traceable>> networkDiscovery() {
+	public Map<RFChannel, List<Beacon>> networkDiscovery() {
 		NetworlLayerRequest request = new NetworlLayerRequest(PRIMITIVE.NETWORK_DISCOVERY,this);
 		NetworkLayerResponse response = networkInterfaceClient.networkDiscovery(request);
 		if(response.getConfirm() == CONFIRM.INVALID_REQUEST) {
@@ -125,6 +129,18 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 			return null;
 		}
 		return response.getAvailableNetworks();
+	}
+	
+	public boolean networkJoin(RFChannel channel,Beacon beacon) {
+		NetworlLayerRequest request = new NetworlLayerRequest(PRIMITIVE.NETWORK_JOIN,this);
+		request.setJoinBeacon(beacon);
+		request.setChannel(channel);
+		NetworkLayerResponse response = networkInterfaceClient.netoworkJoin(request);
+		if(response.getConfirm() == CONFIRM.INVALID_REQUEST) {
+			log.debug(new DeviceData(id,response.getMessage()));
+			return false;
+		}
+		return true;
 	}
 	
 	protected abstract void init();
@@ -151,13 +167,18 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 		this.id = id;
 	}
 	
-	public int getCoverage() {
-		return coverage;
-	}
-	public void setCoverage(int coverage) {
-		this.coverage = coverage;
-	}
 	
+
+	public int getPotency() {
+		return potency;
+	}
+
+
+	public void setPotency(int potency) {
+		this.potency = potency;
+	}
+
+
 	public Point getLocation() {
 		return location;
 	}
@@ -213,5 +234,33 @@ public abstract class Device implements Serializable,Runnable,Traceable{
 	}
 	
 
-		
+	public boolean isRouter() {
+		return router;
+	}
+	public boolean isEndpoint() {
+		return endpoint;
+	}
+
+
+	public void setRouter(boolean router) {
+		this.router = router;
+	}
+
+
+	public void setEndpoint(boolean endpoint) {
+		this.endpoint = endpoint;
+	}
+
+
+	public boolean isAllowJoin() {
+		return allowJoin;
+	}
+
+
+	public void setAllowJoin(boolean allowJoin) {
+		this.allowJoin = allowJoin;
+	}
+	
+	
+	
 }

@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 
 public class MacLayerResponse implements Serializable {
@@ -20,7 +20,7 @@ public class MacLayerResponse implements Serializable {
 	private CONFIRM confirm;
 	private String message;
 	private List<RFChannel> channels;
-	private Map<RFChannel,List<Traceable>> registeredDevices;
+	private Map<RFChannel,List<Beacon>> registeredDevices;
 	private long extendedAddress;
 	
 	public CONFIRM getConfirm() {
@@ -41,10 +41,10 @@ public class MacLayerResponse implements Serializable {
 	public void setChannels(List<RFChannel>  channels) {
 		this.channels = channels;
 	}
-	public Map<RFChannel, List<Traceable>> getRegisteredDevices() {
+	public Map<RFChannel, List<Beacon>> getRegisteredDevices() {
 		return registeredDevices;
 	}
-	public void setRegisteredDevices(Map<RFChannel, List<Traceable>> registeredDevices) {
+	public void setRegisteredDevices(Map<RFChannel, List<Beacon>> registeredDevices) {
 		this.registeredDevices = registeredDevices;
 	}
 	public long getExtendedAddress() {

@@ -23,7 +23,7 @@ import net.jini.core.transaction.TransactionException;
 
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerInterfaceClient;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse;
@@ -35,7 +35,7 @@ import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 
 	private DeviceLog log;
-	private Traceable traceableDevice;
+	private Beacon traceableDevice;
 
 	private MulticastSocket socket;
 	private InetAddress group;
@@ -154,6 +154,8 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 						response = requestExtenedPanId(request);
 					}else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.NETWORK_DISCOVERY) {	
 						response = networkDiscovery(request);
+					}else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.NETWORK_JOIN) {	
+						response = netoworkJoin(request);
 					}
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -212,7 +214,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 
 
 
-	public NetworkLayerNode(Traceable traceableDevice, DeviceLog log) throws IOException {
+	public NetworkLayerNode(Beacon traceableDevice, DeviceLog log) throws IOException {
 		random = new Random();
 		this.traceableDevice = traceableDevice;
 		isListening = false;
@@ -293,7 +295,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			response.setMessage("Device("+request.getDevice().getId()+") is not a coordinator");
 			return response;
 		}
-		Traceable device=request.getDevice();
+		Beacon device=request.getDevice();
 		MacLayerRequest macRequest = new MacLayerRequest();
 		macRequest.setDevice(device);
 		MacLayerResponse macResponse = macInterfaceClient.energyDetectionScan(macRequest);
@@ -305,7 +307,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		
 		macRequest.setActiveChannels(new ArrayList<RFChannel>(acceptableChannels));
 		macResponse = macInterfaceClient.activeScan(macRequest);
-		Map<RFChannel, List<Traceable>> registeredDevices = macResponse.getRegisteredDevices();
+		Map<RFChannel, List<Beacon>> registeredDevices = macResponse.getRegisteredDevices();
 		RFChannel selectedChannel = getMinDevicesChannel(registeredDevices);
 		if(selectedChannel==null) {
 			response.setConfirm(CONFIRM.STARTUP_FAILURE);
@@ -341,15 +343,15 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		NetworkLayerResponse response = new NetworkLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
 		
-		Traceable device=request.getDevice();
+		Beacon device=request.getDevice();
 		MacLayerRequest macRequest = new MacLayerRequest();
 		macRequest.setDevice(device);
 		macRequest.setActiveChannels(channels);
 		MacLayerResponse macResponse = macInterfaceClient.activeScan(macRequest);
-		Map<RFChannel, List<Traceable>> registeredDevices = macResponse.getRegisteredDevices();
-		Map<RFChannel, List<Traceable>> availableNetworks = new LinkedHashMap<RFChannel, List<Traceable>>();
+		Map<RFChannel, List<Beacon>> registeredDevices = macResponse.getRegisteredDevices();
+		Map<RFChannel, List<Beacon>> availableNetworks = new LinkedHashMap<RFChannel, List<Beacon>>();
 		for(RFChannel channel:registeredDevices.keySet()) {
-			List<Traceable> registered = registeredDevices.get(channel);
+			List<Beacon> registered = registeredDevices.get(channel);
 			if(registered!=null && !registered.isEmpty()) {
 				availableNetworks.put(channel, registered);
 			}
@@ -358,13 +360,24 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		return response;
 	}
 	
-	private int createPanID(List<Traceable> devices) {
+	@Override
+	public NetworkLayerResponse netoworkJoin(NetworlLayerRequest request) {
+		log.info(new DeviceData(traceableDevice.getId(),
+				"Request ID ('" + request.getId()
+						+ "'), Device ("+request.getDevice().getId()+") is requesting Network Join"));
+		NetworkLayerResponse response = new NetworkLayerResponse();
+		response.setConfirm(CONFIRM.INVALID_REQUEST);
+		response.setMessage("Not implemented");
+		return response;
+	}
+	
+	private int createPanID(List<Beacon> devices) {
 		boolean validPanID = true;
 		int panID = -1;
 		do {
 			panID = random.nextInt(65535);
 			if(devices!=null && !devices.isEmpty()) {
-				for(Traceable device:devices) {
+				for(Beacon device:devices) {
 					if(device.getPanId()==panID) {
 						validPanID = false;
 						break;
@@ -376,14 +389,14 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 	}
 
 	
-	private RFChannel getMinDevicesChannel(Map<RFChannel, List<Traceable>> registeredDevices) {
+	private RFChannel getMinDevicesChannel(Map<RFChannel, List<Beacon>> registeredDevices) {
 		RFChannel selectedChannel = null;
 		int minDevices = 0;
 		for(RFChannel channel:registeredDevices.keySet()) {
 			if(selectedChannel==null) {
 				selectedChannel = channel;
 			}else {
-				List<Traceable> devices = registeredDevices.get(channel);
+				List<Beacon> devices = registeredDevices.get(channel);
 				if((devices==null && minDevices>0) || (devices!=null && (devices.size()<minDevices))) {
 					selectedChannel = channel;
 				}
@@ -424,6 +437,8 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		response.setExtendedPANID(extendedPANId);
 		return response;
 	}
+
+	
 
 	
 

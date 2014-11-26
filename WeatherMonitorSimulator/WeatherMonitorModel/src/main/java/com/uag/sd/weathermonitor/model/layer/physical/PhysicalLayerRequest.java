@@ -3,7 +3,7 @@ package com.uag.sd.weathermonitor.model.layer.physical;
 import java.io.Serializable;
 
 import com.uag.sd.weathermonitor.model.device.Device;
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
 
 public class PhysicalLayerRequest implements Serializable{
@@ -23,7 +23,7 @@ public class PhysicalLayerRequest implements Serializable{
 	};
 	
 	private PRIMITIVE primitive;
-	private Traceable device;
+	private Beacon device;
 	private long id;
 	private RF_CHANNEL selectedChannel;
 	private boolean responseRequired;
@@ -47,10 +47,10 @@ public class PhysicalLayerRequest implements Serializable{
 	public void setPrimitive(PRIMITIVE primitive) {
 		this.primitive = primitive;
 	}
-	public Traceable getDevice() {
+	public Beacon getDevice() {
 		return device;
 	}
-	public void setDevice(Traceable device) {
+	public void setDevice(Beacon device) {
 		this.device = device;
 	}
 	public long getId() {

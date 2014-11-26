@@ -24,7 +24,7 @@ import net.jini.core.transaction.TransactionException;
 
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerInterfaceClient;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerRequest;
@@ -35,7 +35,7 @@ import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 public class MacLayerNode implements Runnable, MacLayerInterface {
 
 	private DeviceLog log;
-	private Traceable traceableDevice;
+	private Beacon traceableDevice;
 	private boolean active;
 
 	private MulticastSocket socket;
@@ -49,7 +49,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 	private PhysicalLayerInterfaceClient physicalClient;
 	private MacLayerInterfaceClient macClient;
 	
-	private Map<RFChannel,List<Traceable>> registeredDevices;
+	private Map<RFChannel,List<Beacon>> registeredDevices;
 	
 	private class MacRequestResolver implements Runnable{
 
@@ -146,6 +146,8 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 						response = getExtendedAddress(request);
 					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.ACTIVE_SCAN) {
 						response = activeScan(request);
+					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.ASSOCIATION) {
+						response = association(request);
 					}
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -208,7 +210,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 
 	}
 
-	public MacLayerNode(Traceable traceableDevice, DeviceLog log) throws SocketException, UnknownHostException {
+	public MacLayerNode(Beacon traceableDevice, DeviceLog log) throws SocketException, UnknownHostException {
 		this.traceableDevice = traceableDevice;
 		this.log = log;
 		active = false;
@@ -225,7 +227,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		MacLayerResponse response = macClient.getRegisteredDevices(macRequest);
 		registeredDevices = response.getRegisteredDevices();
 		if(registeredDevices==null) {
-			registeredDevices = new HashMap<RFChannel, List<Traceable>>();
+			registeredDevices = new HashMap<RFChannel, List<Beacon>>();
 		}
 		
 		response = macClient.getExtendedAddress(macRequest);
@@ -291,11 +293,11 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		this.log = log;
 	}
 
-	public Traceable getTraceableDevice() {
+	public Beacon getTraceableDevice() {
 		return traceableDevice;
 	}
 
-	public void setTraceableDevice(Traceable traceableDevice) {
+	public void setTraceableDevice(Beacon traceableDevice) {
 		this.traceableDevice = traceableDevice;
 	}
 
@@ -372,7 +374,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
 		response.setMessage("OK");
-		Map<RFChannel,List<Traceable>> registeredDevices = new HashMap<RFChannel, List<Traceable>>();
+		Map<RFChannel,List<Beacon>> registeredDevices = new HashMap<RFChannel, List<Beacon>>();
 		for(RFChannel channel:request.getActiveChannels()) {
 			registeredDevices.put(channel,this.registeredDevices.get(channel));
 		}
@@ -387,9 +389,9 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 						+ "'), Device ("+request.getDevice().getId()+") is requesting "+request.getPrimitive().description));
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
-		List<Traceable> devices = registeredDevices.get(request.getChannel());
+		List<Beacon> devices = registeredDevices.get(request.getChannel());
 		if(devices == null) {
-			devices = new ArrayList<Traceable>();
+			devices = new ArrayList<Beacon>();
 		}
 		log.debug(new DeviceData(traceableDevice.getId(), "Registering device:"+request.getDevice().getId()));
 		devices.add(request.getDevice());
@@ -403,8 +405,8 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
 						+ "'), Device ("+request.getDevice().getId()+") is requesting "+request.getPrimitive().description));
-		List<Traceable> devices = registeredDevices.get(request.getChannel());
-		for(Traceable device:devices) {
+		List<Beacon> devices = registeredDevices.get(request.getChannel());
+		for(Beacon device:devices) {
 			if(device.getId().equals(request.getDevice().getId()) && device.getPanId()== request.getDevice().getPanId()) {
 				device.setExtendedPanID(request.getDevice().getExtendedPanID());
 				device.setStarted(true);
@@ -435,6 +437,14 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 			response.setConfirm(CONFIRM.SUCCESS);
 			response.setExtendedAddress(extendedAddress);
 		}
+		return response;
+	}
+
+	@Override
+	public MacLayerResponse association(MacLayerRequest request) {
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.INVALID_REQUEST);
+		response.setMessage("Not implemented");
 		return response;
 	}
 

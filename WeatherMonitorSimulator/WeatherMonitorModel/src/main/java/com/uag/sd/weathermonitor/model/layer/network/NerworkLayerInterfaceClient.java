@@ -13,7 +13,7 @@ import java.net.UnknownHostException;
 
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
@@ -22,9 +22,9 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 
 	private InetAddress group;
 	private DeviceLog log;
-	private Traceable device;
+	private Beacon device;
 
-	public NerworkLayerInterfaceClient(Traceable device, DeviceLog log)
+	public NerworkLayerInterfaceClient(Beacon device, DeviceLog log)
 			throws SocketException, UnknownHostException {
 		this.log = log;
 		this.device = device;
@@ -103,7 +103,7 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 		return response;
 	}
 
-	private Socket getNetworkLayerSocket(Traceable device)
+	private Socket getNetworkLayerSocket(Beacon device)
 			throws NumberFormatException, UnknownHostException, IOException {
 		NetworlLayerRequest requestNode = new NetworlLayerRequest();
 		requestNode.setDevice(device);
@@ -173,6 +173,11 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 	@Override
 	public NetworkLayerResponse networkDiscovery(NetworlLayerRequest request) {
 		return sendRequest(request, PRIMITIVE.NETWORK_DISCOVERY);
+	}
+
+	@Override
+	public NetworkLayerResponse netoworkJoin(NetworlLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.NETWORK_JOIN);
 	}
 
 }

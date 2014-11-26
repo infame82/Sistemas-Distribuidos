@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 
 public class NetworkLayerResponse implements Serializable{
@@ -20,7 +20,7 @@ public class NetworkLayerResponse implements Serializable{
 	private CONFIRM confirm;
 	private String message;
 	private long extendedPANID;
-	private Map<RFChannel, List<Traceable>>  availableNetworks;
+	private Map<RFChannel, List<Beacon>>  availableNetworks;
 	
 	public CONFIRM getConfirm() {
 		return confirm;
@@ -40,11 +40,11 @@ public class NetworkLayerResponse implements Serializable{
 	public void setExtendedPANID(long extendedPANID) {
 		this.extendedPANID = extendedPANID;
 	}
-	public Map<RFChannel, List<Traceable>> getAvailableNetworks() {
+	public Map<RFChannel, List<Beacon>> getAvailableNetworks() {
 		return availableNetworks;
 	}
 	public void setAvailableNetworks(
-			Map<RFChannel, List<Traceable>> availableNetworks) {
+			Map<RFChannel, List<Beacon>> availableNetworks) {
 		this.availableNetworks = availableNetworks;
 	}
 	

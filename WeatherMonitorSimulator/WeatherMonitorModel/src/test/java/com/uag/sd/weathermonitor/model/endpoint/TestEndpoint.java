@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 
 import com.uag.sd.weathermonitor.model.device.DefaultDeviceLog;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 
@@ -57,8 +57,10 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 		//zigBeeDevice.addSensor(hSensor);
 		//coordinator.setActive(true);
 		coordinator.setCoordinator(true);
-		endpoint.setCoordinator(false);
+		coordinator.setAllowJoin(true);
 		
+		endpoint.setEndpoint(true);
+		endpoint.setAllowJoin(false);
 		//zigBeeRouter.setId("ZibBee Router");
 		//zigBeeRouter.setActive(true);
 	}
@@ -71,7 +73,16 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 		Thread.sleep(3000);
 		
 		coordinator.networkFormation();
-		Map<RFChannel, List<Traceable>> availableNetworksMap = endpoint.networkDiscovery();
+		Map<RFChannel, List<Beacon>> availableNetworksMap = endpoint.networkDiscovery();
+		for(RFChannel channel:availableNetworksMap.keySet()) {
+			List<Beacon> beacons = availableNetworksMap.get(channel);
+			if(beacons!=null && !beacons.isEmpty()) {
+				Beacon beacon = beacons.get(0);
+				endpoint.networkJoin(channel, beacon);
+				break;
+			}
+		}
+		
 		//zigBeeRouter.setCoordinator(true);
 		//zigBeeRouter.establishNetwork();
 		Thread.sleep(20000);

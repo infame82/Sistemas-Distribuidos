@@ -20,7 +20,7 @@ import net.jini.core.transaction.TransactionException;
 
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Traceable;
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
@@ -29,7 +29,7 @@ import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 	
 	private DeviceLog log;
-	private Traceable traceableDevice;
+	private Beacon traceableDevice;
 
 	private MulticastSocket socket;
 	private InetAddress group;
@@ -193,7 +193,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 	
 
 
-	public PhysicalLayerNode(Traceable traceableDevice, DeviceLog log) throws IOException {
+	public PhysicalLayerNode(Beacon traceableDevice, DeviceLog log) throws IOException {
 		this.traceableDevice = traceableDevice;
 		isListening = false;
 		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
