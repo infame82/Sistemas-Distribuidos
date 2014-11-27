@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.uag.sd.weathermonitor.model.router.ZigBeeRouter;
+import com.uag.sd.weathermonitor.model.device.ZigBeeRouter;
 
 public class RouterTableModel extends AbstractTableModel{
 

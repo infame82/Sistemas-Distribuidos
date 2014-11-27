@@ -2,7 +2,7 @@ package com.uag.sd.weathermonitor.model.sensor;
 
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.endpoint.ZigBeeDevice;
+import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
 
 public abstract class Sensor implements Runnable{
 
@@ -11,7 +11,7 @@ public abstract class Sensor implements Runnable{
 	protected boolean active;
 	protected SensorMonitor monitor;
 	protected String value;
-	protected ZigBeeDevice parent;
+	protected ZigBeeEndpoint parent;
 	protected DeviceLog log;
 	
 	//In milliseconds, 5000 = 5 sec
@@ -27,11 +27,11 @@ public abstract class Sensor implements Runnable{
 		this.id = id;
 	}
 	
-	public void setParent(ZigBeeDevice parent) {
+	public void setParent(ZigBeeEndpoint parent) {
 		this.parent = parent;
 	}
 	
-	public ZigBeeDevice getParent() {
+	public ZigBeeEndpoint getParent() {
 		return parent;
 	}
 	

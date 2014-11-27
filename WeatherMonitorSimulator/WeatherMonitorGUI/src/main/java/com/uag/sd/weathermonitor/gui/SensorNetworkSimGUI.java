@@ -34,8 +34,8 @@ import com.uag.sd.weathermonitor.gui.models.RouterTableModel;
 import com.uag.sd.weathermonitor.gui.models.SensorTableModel;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.endpoint.ZigBeeDevice;
-import com.uag.sd.weathermonitor.model.router.ZigBeeRouter;
+import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
+import com.uag.sd.weathermonitor.model.device.ZigBeeRouter;
 import com.uag.sd.weathermonitor.model.sensor.HumiditySensor;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 import com.uag.sd.weathermonitor.model.sensor.TemperatureSensor;
@@ -223,12 +223,12 @@ public class SensorNetworkSimGUI {
 		endpointRouterTableModel = new EndpointRouterTableModel();
 		routerTableModel = new RouterTableModel();
 		try {
-			ZigBeeDevice e1 = new ZigBeeDevice("E1", sensorLog, endpointLog);
+			ZigBeeEndpoint e1 = new ZigBeeEndpoint("E1", sensorLog, endpointLog);
 			e1.addSensor(new TemperatureSensor("T1"));
 			e1.addSensor(new HumiditySensor("H1"));
 			e1.addRouter(new ZigBeeRouter("R1", null));
 			endpointTableModel.addEndpoint(e1);
-			endpointTableModel.addEndpoint(new ZigBeeDevice("E2", sensorLog,
+			endpointTableModel.addEndpoint(new ZigBeeEndpoint("E2", sensorLog,
 					endpointLog));
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(frmSensorNetworkSimulation,
@@ -260,10 +260,10 @@ public class SensorNetworkSimGUI {
 		editEndpointButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					ZigBeeDevice zigBeeDevice = endpointTableModel
+					ZigBeeEndpoint zigBeeEndpoint = endpointTableModel
 							.getEndpoint(endPointsTable.getSelectedRow());
 					EndpointDialogGUI dialog = new EndpointDialogGUI(
-							zigBeeDevice, endpointTableModel, sensorLog,endpointLog);
+							zigBeeEndpoint, endpointTableModel, sensorLog,endpointLog);
 					dialog.setTitle("Edit Endpoint");
 					dialog.setVisible(true);
 				} catch (Exception ex) {
@@ -516,9 +516,9 @@ public class SensorNetworkSimGUI {
 		addSensorButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					ZigBeeDevice zigBeeDevice = endpointTableModel
+					ZigBeeEndpoint zigBeeEndpoint = endpointTableModel
 							.getEndpoint(endPointsTable.getSelectedRow());
-					SensorDialogGUI dialog = new SensorDialogGUI(zigBeeDevice,
+					SensorDialogGUI dialog = new SensorDialogGUI(zigBeeEndpoint,
 							null, sensorTableModel);
 					dialog.setTitle("Add Sensor");
 					dialog.setVisible(true);
@@ -533,11 +533,11 @@ public class SensorNetworkSimGUI {
 		editSensorButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					ZigBeeDevice zigBeeDevice = endpointTableModel
+					ZigBeeEndpoint zigBeeEndpoint = endpointTableModel
 							.getEndpoint(endPointsTable.getSelectedRow());
-					Sensor sensor = zigBeeDevice.getSensors().get(
+					Sensor sensor = zigBeeEndpoint.getSensors().get(
 							sensorsTable.getSelectedRow());
-					SensorDialogGUI dialog = new SensorDialogGUI(zigBeeDevice,
+					SensorDialogGUI dialog = new SensorDialogGUI(zigBeeEndpoint,
 							sensor, sensorTableModel);
 					dialog.setTitle("Edit Sensor");
 					dialog.setVisible(true);
@@ -1039,10 +1039,10 @@ public class SensorNetworkSimGUI {
 						if (endPointsTable.getSelectedRow() == -1) {
 							return;
 						}
-						ZigBeeDevice zigBeeDevice = endpointTableModel
+						ZigBeeEndpoint zigBeeEndpoint = endpointTableModel
 								.getEndpoint(endPointsTable.getSelectedRow());
-						sensorTableModel.setEndpoint(zigBeeDevice);
-						endpointRouterTableModel.setEndpoint(zigBeeDevice);
+						sensorTableModel.setEndpoint(zigBeeEndpoint);
+						endpointRouterTableModel.setEndpoint(zigBeeEndpoint);
 						editEndpointButton.setEnabled(true);
 						removeEndpointButton.setEnabled(true);
 						addSensorButton.setEnabled(true);
@@ -1061,9 +1061,9 @@ public class SensorNetworkSimGUI {
 
 		removeEndpointButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				ZigBeeDevice zigBeeDevice = endpointTableModel
+				ZigBeeEndpoint zigBeeEndpoint = endpointTableModel
 						.removeEndpoint(endPointsTable.getSelectedRow());
-				zigBeeDevice.stop();
+				zigBeeEndpoint.stop();
 				endPointsTable.getSelectionModel().clearSelection();
 				removeEndpointButton.setEnabled(false);
 				editEndpointButton.setEnabled(false);
@@ -1075,8 +1075,8 @@ public class SensorNetworkSimGUI {
 
 		deleteSensorButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				ZigBeeDevice zigBeeDevice = sensorTableModel.getEndpoint();
-				zigBeeDevice.removeSensor(sensorsTable.getSelectedRow());
+				ZigBeeEndpoint zigBeeEndpoint = sensorTableModel.getEndpoint();
+				zigBeeEndpoint.removeSensor(sensorsTable.getSelectedRow());
 				sensorsTable.getSelectionModel().clearSelection();
 				deleteSensorButton.setEnabled(false);
 				editSensorButton.setEnabled(false);

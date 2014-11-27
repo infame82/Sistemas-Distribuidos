@@ -24,7 +24,7 @@ import javax.swing.border.TitledBorder;
 
 import com.uag.sd.weathermonitor.gui.models.EndpointTableModel;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.endpoint.ZigBeeDevice;
+import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
 
 public class EndpointDialogGUI extends JDialog {
 
@@ -38,7 +38,7 @@ public class EndpointDialogGUI extends JDialog {
 	private JSpinner positionXField;
 	private JSpinner positionYField;
 	private JCheckBox activeBox;
-	private ZigBeeDevice zigBeeDevice;
+	private ZigBeeEndpoint zigBeeEndpoint;
 	private EndpointTableModel tableModel;
 	private DeviceLog sensorLog;
 	private DeviceLog deviceLog;
@@ -55,19 +55,19 @@ public class EndpointDialogGUI extends JDialog {
 		}
 	}
 
-	public EndpointDialogGUI(ZigBeeDevice zigBeeDevice,EndpointTableModel tableModel,DeviceLog sensorLog,DeviceLog deviceLog) {
+	public EndpointDialogGUI(ZigBeeEndpoint zigBeeEndpoint,EndpointTableModel tableModel,DeviceLog sensorLog,DeviceLog deviceLog) {
 		this();
-		this.zigBeeDevice = zigBeeDevice;
+		this.zigBeeEndpoint = zigBeeEndpoint;
 		this.tableModel = tableModel;
 		this.sensorLog = sensorLog;
 		this.deviceLog = deviceLog;
-		if(zigBeeDevice!=null) {
-			idField.setText(zigBeeDevice.getId());
+		if(zigBeeEndpoint!=null) {
+			idField.setText(zigBeeEndpoint.getId());
 			idField.setEnabled(false);
-			coverageField.getModel().setValue(zigBeeDevice.getPotency());
-			positionXField.getModel().setValue( new Double(zigBeeDevice.getLocation().getX()).intValue());
-			positionYField.getModel().setValue( new Double(zigBeeDevice.getLocation().getY()).intValue());
-			activeBox.setSelected(zigBeeDevice.isActive());
+			coverageField.getModel().setValue(zigBeeEndpoint.getPotency());
+			positionXField.getModel().setValue( new Double(zigBeeEndpoint.getLocation().getX()).intValue());
+			positionYField.getModel().setValue( new Double(zigBeeEndpoint.getLocation().getY()).intValue());
+			activeBox.setSelected(zigBeeEndpoint.isActive());
 		}
 	}
 	
@@ -230,37 +230,37 @@ public class EndpointDialogGUI extends JDialog {
 					public void actionPerformed(ActionEvent e) {
 						boolean isNew = false;
 						
-						if(zigBeeDevice==null) {
+						if(zigBeeEndpoint==null) {
 							try {
-								zigBeeDevice = new ZigBeeDevice(idField.getText(),sensorLog,deviceLog);
+								zigBeeEndpoint = new ZigBeeEndpoint(idField.getText(),sensorLog,deviceLog);
 							} catch ( IOException e1) {
 								JOptionPane.showMessageDialog(EndpointDialogGUI.this, e1.getMessage());
 								return;
 							}
-							zigBeeDevice.setSensorLog(sensorLog);
+							zigBeeEndpoint.setSensorLog(sensorLog);
 							isNew = true;
 							
 						}
-						boolean prevState = zigBeeDevice.isActive();
-						zigBeeDevice.setId(idField.getText());
-						zigBeeDevice.setPotency((int)coverageField.getModel().getValue());
-						zigBeeDevice.setLocation((int)positionXField.getModel().getValue(),
+						boolean prevState = zigBeeEndpoint.isActive();
+						zigBeeEndpoint.setId(idField.getText());
+						zigBeeEndpoint.setPotency((int)coverageField.getModel().getValue());
+						zigBeeEndpoint.setLocation((int)positionXField.getModel().getValue(),
 								(int)positionYField.getModel().getValue());
-						zigBeeDevice.setActive(activeBox.isSelected());
+						zigBeeEndpoint.setActive(activeBox.isSelected());
 						if(isNew) {
-							tableModel.addEndpoint(zigBeeDevice);
-							if(zigBeeDevice.isActive()) {
-								tableModel.startEndpoint(zigBeeDevice);
+							tableModel.addEndpoint(zigBeeEndpoint);
+							if(zigBeeEndpoint.isActive()) {
+								tableModel.startEndpoint(zigBeeEndpoint);
 							}
 						}else {
-							if(prevState != zigBeeDevice.isActive()) {
-								if(zigBeeDevice.isActive()) {
-									tableModel.startEndpoint(zigBeeDevice);
+							if(prevState != zigBeeEndpoint.isActive()) {
+								if(zigBeeEndpoint.isActive()) {
+									tableModel.startEndpoint(zigBeeEndpoint);
 								}else {
-									zigBeeDevice.stop();
+									zigBeeEndpoint.stop();
 								}
 							}
-							int rowIndex = tableModel.getIndexOf(zigBeeDevice);
+							int rowIndex = tableModel.getIndexOf(zigBeeEndpoint);
 							tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
 						}
 						EndpointDialogGUI.this.dispose();

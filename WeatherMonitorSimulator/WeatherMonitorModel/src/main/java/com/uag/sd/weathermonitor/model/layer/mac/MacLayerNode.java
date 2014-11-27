@@ -1,5 +1,6 @@
 package com.uag.sd.weathermonitor.model.layer.mac;
 
+import java.awt.Point;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -22,10 +23,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.TransactionException;
 
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.mac.MacLayerResponse.CONFIRM;
+import com.uag.sd.weathermonitor.model.layer.network.NerworkLayerInterfaceClient;
+import com.uag.sd.weathermonitor.model.layer.network.NetworkLayerResponse;
+import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerInterfaceClient;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse;
@@ -48,8 +52,12 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 	
 	private PhysicalLayerInterfaceClient physicalClient;
 	private MacLayerInterfaceClient macClient;
+	private NerworkLayerInterfaceClient networkInterfaceClient;
 	
-	private Map<RFChannel,List<Beacon>> registeredDevices;
+	private Map<RFChannel,List<Beacon>> registeredNetworks;
+	private Map<String,List<Beacon>> registeredDevices;
+	
+	
 	
 	private class MacRequestResolver implements Runnable{
 
@@ -99,6 +107,8 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 				
 			}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.START) {
 				response = start(request);
+			}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.REGISTER_DEVICE) {
+				response = registerDevice(request);
 			}
 			if(request.isResponseRequired()) {
 				byte[] responseContent = ObjectSerializer.serialize(response);
@@ -140,6 +150,8 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 					MacLayerRequest request = (MacLayerRequest) in.readObject();
 					if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.ENERGY_DETECTION_SCAN) {
 						response = energyDetectionScan(request);
+					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.REQUEST_REGISTERED_NETWORKS) {
+						response = getRegisteredNetworks(request);
 					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.REQUEST_REGISTERED_DEVICES) {
 						response = getRegisteredDevices(request);
 					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.REQUEST_EXTENED_ADDRESS) {
@@ -217,6 +229,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 		physicalClient = new PhysicalLayerInterfaceClient(traceableDevice,log);
 		macClient = new MacLayerInterfaceClient(traceableDevice, log);
+		networkInterfaceClient = new NerworkLayerInterfaceClient(traceableDevice,log);
 		
 				
 	}
@@ -224,10 +237,16 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 	public void init() {
 		MacLayerRequest macRequest = new MacLayerRequest();
 		macRequest.setDevice(traceableDevice);
-		MacLayerResponse response = macClient.getRegisteredDevices(macRequest);
+		MacLayerResponse response = macClient.getRegisteredNetworks(macRequest);
+		registeredNetworks = response.getRegisteredNetworks();
+		if(registeredNetworks==null) {
+			registeredNetworks = new HashMap<RFChannel, List<Beacon>>();
+		}
+		
+		response = macClient.getRegisteredDevices(macRequest);
 		registeredDevices = response.getRegisteredDevices();
 		if(registeredDevices==null) {
-			registeredDevices = new HashMap<RFChannel, List<Beacon>>();
+			registeredDevices = new HashMap<String, List<Beacon>>();
 		}
 		
 		response = macClient.getExtendedAddress(macRequest);
@@ -374,12 +393,46 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
 		response.setMessage("OK");
-		Map<RFChannel,List<Beacon>> registeredDevices = new HashMap<RFChannel, List<Beacon>>();
+		Map<RFChannel,List<Beacon>> detectedNetworks = new HashMap<RFChannel, List<Beacon>>();
+		List<Beacon> registeredBeacons = null;
 		for(RFChannel channel:request.getActiveChannels()) {
-			registeredDevices.put(channel,this.registeredDevices.get(channel));
+			List<Beacon> detectedBeacons = new ArrayList<Beacon>();
+			registeredBeacons = this.registeredNetworks.get(channel);
+			if(registeredBeacons!=null && !registeredBeacons.isEmpty()) {
+				for(Beacon registeredBeacon:registeredBeacons) {
+					if(isBeaconInRange(request.getDevice(), registeredBeacon)) {
+						detectedBeacons.add(registeredBeacon);
+					}
+				}
+			}
+			detectedNetworks.put(channel,detectedBeacons);
 		}
-		response.setRegisteredDevices(registeredDevices);
+		response.setRegisteredNetworks(detectedNetworks);
 		return response;
+	}
+	
+	public static boolean isBeaconInRange(Beacon a,Beacon b) {
+		Point p1 = a.getLocation();
+		Point p2 = b.getLocation();
+		boolean rangeX = false;
+		boolean rangeY = false;
+		if(p1.getX() == p2.getX()) {
+			rangeX = true;
+		}else if(p1.getX()<p2.getX() && ( (p1.getX()+a.getPotency()) > (p2.getX()-b.getPotency()) )) {
+			rangeX = true;
+		}else if(p1.getX()>p2.getX() && ( (p1.getX()-a.getPotency()) < (p2.getX()+b.getPotency()) )) {
+			rangeX = true;
+		}
+		
+		if(p1.getY() == p2.getY()) {
+			rangeY = true;
+		}else if(p1.getY()<p2.getY() && ( (p1.getY()+a.getPotency()) > (p2.getY()-b.getPotency()) )) {
+			rangeY = true;
+		}else if(p1.getY()>p2.getY() && ( (p1.getY()-a.getPotency()) < (p2.getY()+b.getPotency()) )) {
+			rangeY = true;
+		}
+		
+		return rangeX && rangeY;
 	}
 
 	@Override
@@ -389,14 +442,14 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 						+ "'), Device ("+request.getDevice().getId()+") is requesting "+request.getPrimitive().description));
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
-		List<Beacon> devices = registeredDevices.get(request.getChannel());
+		List<Beacon> devices = registeredNetworks.get(request.getChannel());
 		if(devices == null) {
 			devices = new ArrayList<Beacon>();
 		}
 		log.debug(new DeviceData(traceableDevice.getId(), "Registering device:"+request.getDevice().getId()));
 		devices.add(request.getDevice());
 		
-		registeredDevices.put(request.getChannel(), devices);
+		registeredNetworks.put(request.getChannel(), devices);
 		return response;
 	}
 
@@ -405,26 +458,33 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		log.info(new DeviceData(traceableDevice.getId(),
 				"Request ID ('" + request.getId()
 						+ "'), Device ("+request.getDevice().getId()+") is requesting "+request.getPrimitive().description));
-		List<Beacon> devices = registeredDevices.get(request.getChannel());
-		for(Beacon device:devices) {
-			if(device.getId().equals(request.getDevice().getId()) && device.getPanId()== request.getDevice().getPanId()) {
-				device.setExtendedPanID(request.getDevice().getExtendedPanID());
-				device.setStarted(true);
-				break;
-			}
-		}
-		
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
+		List<Beacon> networks = registeredNetworks.get(request.getChannel());
+		if(networks == null) {
+			networks = new ArrayList<Beacon>();
+		}
+		log.debug(new DeviceData(traceableDevice.getId(), "Registering network, PANID: "+request.getDevice().getPanId()+", extPANID: "+request.getDevice().getExtendedPanID()));
+		networks.add(request.getDevice());
+		
+		String deviceNwId = request.getDevice().getPanId()+":"+request.getDevice().getExtendedPanID();
+		List<Beacon> networkDevices = registeredDevices.get(deviceNwId);
+		if(networkDevices == null) {
+			networkDevices = new ArrayList<Beacon>();
+		}
+		networkDevices.add(request.getDevice());
+		
+		registeredDevices.put(deviceNwId, networkDevices);
+		registeredNetworks.put(request.getChannel(), networks);
 		return response;
 	}
 
 	@Override
-	public synchronized MacLayerResponse getRegisteredDevices(MacLayerRequest request) {
+	public synchronized MacLayerResponse getRegisteredNetworks(MacLayerRequest request) {
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.SUCCESS);
 		response.setMessage("");
-		response.setRegisteredDevices(registeredDevices);
+		response.setRegisteredNetworks(registeredNetworks);
 		return response;
 	}
 
@@ -444,7 +504,56 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 	public MacLayerResponse association(MacLayerRequest request) {
 		MacLayerResponse response = new MacLayerResponse();
 		response.setConfirm(CONFIRM.INVALID_REQUEST);
-		response.setMessage("Not implemented");
+		
+		Beacon newDevice = request.getDevice();
+		Beacon joinBeacon = request.getJoinBeacon();
+		String beaconId = joinBeacon.getPanId()+":"+joinBeacon.getExtendedPanID();
+		List<Beacon> neighbords = new ArrayList<Beacon>();
+		for(Beacon parent:registeredDevices.get(beaconId)) {
+			if(parent.isAllowJoin() && isBeaconInRange(newDevice, parent)) {
+				neighbords.add(parent);
+			}
+		}
+		
+		NetworlLayerRequest netRequest = new NetworlLayerRequest();
+		netRequest.setDevice(newDevice);
+		netRequest.setAssociateBeacons(neighbords);
+		NetworkLayerResponse netResponse = networkInterfaceClient.associate(netRequest);
+		if(netResponse.getConfirm() == NetworkLayerResponse.CONFIRM.SUCCESS) {
+			response.setConfirm(CONFIRM.SUCCESS);
+			newDevice.setPanId(joinBeacon.getPanId());
+			newDevice.setExtendedPanID(joinBeacon.getExtendedPanID());
+			MacLayerRequest registerRequest = new MacLayerRequest();
+			registerRequest.setDevice(newDevice);
+			macClient.registerDevice(registerRequest);
+			response.setNeighbords(neighbords);
+			response.setBeacon(newDevice);
+		}
+		return response;
+	}
+
+	@Override
+	public MacLayerResponse getRegisteredDevices(MacLayerRequest request) {
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.SUCCESS);
+		response.setMessage("");
+		response.setRegisteredDevices(registeredDevices);
+		return response;
+	}
+
+	@Override
+	public MacLayerResponse registerDevice(MacLayerRequest request) {
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.SUCCESS);
+		response.setMessage("");
+		String deviceNwId = request.getDevice().getPanId()+":"+request.getDevice().getExtendedPanID();
+		List<Beacon> networkDevices = registeredDevices.get(deviceNwId);
+		if(networkDevices == null) {
+			networkDevices = new ArrayList<Beacon>();
+		}
+		networkDevices.add(request.getDevice());
+		log.debug(new DeviceData(traceableDevice.getId(),"Registering neighbord "+request.getDevice().getId()+", "+request.getDevice().getIP()+":"+request.getDevice().getPort()));
+		registeredDevices.put(deviceNwId, networkDevices);
 		return response;
 	}
 

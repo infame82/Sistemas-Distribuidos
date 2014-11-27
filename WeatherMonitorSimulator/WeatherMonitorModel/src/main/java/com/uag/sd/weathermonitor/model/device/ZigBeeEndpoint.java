@@ -1,28 +1,20 @@
-package com.uag.sd.weathermonitor.model.endpoint;
+package com.uag.sd.weathermonitor.model.device;
 
 import java.io.IOException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.DatagramPacket;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.uag.sd.weathermonitor.model.device.DefaultDeviceLog;
-import com.uag.sd.weathermonitor.model.device.Device;
-import com.uag.sd.weathermonitor.model.device.DeviceData;
-import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.router.ZigBeeRouter;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 import com.uag.sd.weathermonitor.model.sensor.SensorMonitor;
 
 @Component("zigBeeDevice")
 @Scope("prototype")
-public class ZigBeeDevice extends Device implements SensorMonitor {
+public class ZigBeeEndpoint extends Device implements SensorMonitor {
 
 	/**
 	 * 
@@ -30,13 +22,13 @@ public class ZigBeeDevice extends Device implements SensorMonitor {
 	private static final long serialVersionUID = 1776039180607508567L;
 	private transient List<Sensor> sensors;
 	private transient LinkedHashMap<String, ZigBeeRouter> zigBeeRouters;
-	private transient ThreadPoolExecutor executorService;
-	private transient Integer threadPoolSize;
+	
 	private transient DeviceLog sensorLog;
 
-	public ZigBeeDevice(String id, DeviceLog sensorLog, DeviceLog log) throws IOException  {
+	public ZigBeeEndpoint(String id, DeviceLog sensorLog, DeviceLog log) throws IOException  {
 		super(id,log);
-		executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+		endpoint=true;
+		allowJoin = false;
 		sensors = new ArrayList<Sensor>();
 		this.id = id;
 		this.sensorLog = sensorLog;
@@ -133,11 +125,11 @@ public class ZigBeeDevice extends Device implements SensorMonitor {
 	}
 
 	public boolean equals(Object o) {
-		if (o == null || !(o instanceof ZigBeeDevice)) {
+		if (o == null || !(o instanceof ZigBeeEndpoint)) {
 			return false;
 		}
-		ZigBeeDevice zigBeeDevice = (ZigBeeDevice) o;
-		return zigBeeDevice.id.equals(id);
+		ZigBeeEndpoint zigBeeEndpoint = (ZigBeeEndpoint) o;
+		return zigBeeEndpoint.id.equals(id);
 	}
 
 	public LinkedHashMap<String, ZigBeeRouter> getRouters() {
@@ -164,6 +156,7 @@ public class ZigBeeDevice extends Device implements SensorMonitor {
 	}
 
 	@Override
-	protected void execute() {}
+	protected void execute(DeviceLayerRequest request) {
+	}
 
 }

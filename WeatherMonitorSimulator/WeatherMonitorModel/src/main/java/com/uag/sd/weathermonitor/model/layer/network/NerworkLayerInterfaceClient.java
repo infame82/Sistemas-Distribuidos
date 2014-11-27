@@ -180,4 +180,9 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 		return sendRequest(request, PRIMITIVE.NETWORK_JOIN);
 	}
 
+	@Override
+	public NetworkLayerResponse associate(NetworlLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.ASSOCIATE);
+	}
+
 }

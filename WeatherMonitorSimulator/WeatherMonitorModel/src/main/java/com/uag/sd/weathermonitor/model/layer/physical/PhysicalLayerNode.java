@@ -268,7 +268,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 			requestExecutor.execute(tcpPhysicalRequestConnection);
 			requestExecutor.execute(energyLevelStabilizer);
 			while (isListening) {
-				buf = new byte[1024];
+				buf = new byte[BUFFER_SIZE];
 				packet = new DatagramPacket(buf, buf.length);
 				socket.receive(packet);
 				requestExecutor.execute(new PhysicalRequestResolver(packet

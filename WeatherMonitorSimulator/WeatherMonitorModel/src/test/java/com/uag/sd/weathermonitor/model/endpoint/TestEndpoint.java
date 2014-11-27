@@ -17,6 +17,8 @@ import org.testng.annotations.Test;
 import com.uag.sd.weathermonitor.model.device.DefaultDeviceLog;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.Beacon;
+import com.uag.sd.weathermonitor.model.device.ZigBeeCoordinator;
+import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 
@@ -34,8 +36,8 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 	
 	//@Autowired
 	//@Qualifier("zigBeeDevice")
-	private ZigBeeDevice coordinator;
-	private ZigBeeDevice endpoint;
+	private ZigBeeCoordinator coordinator;
+	private ZigBeeEndpoint endpoint;
 	
 	//@Autowired
 	//@Qualifier("zigBeeRouter")
@@ -52,18 +54,12 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 		hSensor.setId("H1");
 		DeviceLog coordinatorLog = new DefaultDeviceLog();
 		DeviceLog endpointLog = new DefaultDeviceLog();
-		coordinator = new ZigBeeDevice("ZigBee Device Coordinator", coordinatorLog, coordinatorLog);
-		endpoint = new ZigBeeDevice("ZigBee Device Endpoint", endpointLog, endpointLog);
-		//zigBeeDevice.addSensor(tSensor);
-		//zigBeeDevice.addSensor(hSensor);
-		//coordinator.setActive(true);
-		coordinator.setCoordinator(true);
-		coordinator.setAllowJoin(true);
-		
-		endpoint.setEndpoint(true);
-		endpoint.setAllowJoin(false);
-		//zigBeeRouter.setId("ZibBee Router");
-		//zigBeeRouter.setActive(true);
+		coordinator = new ZigBeeCoordinator("Coordinator 00", coordinatorLog);
+		coordinator.setLocation(4, 4);
+		coordinator.setPotency(2);
+		endpoint = new ZigBeeEndpoint("Endpoint 01", endpointLog, endpointLog);
+		endpoint.setLocation(7,1);
+		endpoint.setPotency(2);
 	}
 	
 	public static boolean isCovered(Point a,int pA,Point b,int pB) {

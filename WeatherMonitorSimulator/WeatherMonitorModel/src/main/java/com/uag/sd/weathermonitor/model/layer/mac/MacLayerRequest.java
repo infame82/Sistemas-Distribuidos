@@ -15,8 +15,8 @@ public class MacLayerRequest implements Serializable{
 	
 	public enum PRIMITIVE{REQUEST_MAC_NODE("MAC Node"),ENERGY_DETECTION_SCAN("Energy Detection Scan"),
 		ACTIVE_SCAN("Active Scan"),SET_PAN_ID("Set PAN ID"),START("Start"),INVALID_REQUEST("Invalid Request"),
-		REQUEST_REGISTERED_DEVICES("Get Registered Devices"),REQUEST_EXTENED_ADDRESS("Get Extended Address"),
-		ASSOCIATION("Association");
+		REQUEST_REGISTERED_NETWORKS("Get Registered Networks"),REQUEST_EXTENED_ADDRESS("Get Extended Address"),
+		ASSOCIATION("Association"),REQUEST_REGISTERED_DEVICES("Get Registered Devices"),REGISTER_DEVICE("Register Device");
 			public String description;
 			private PRIMITIVE(String description) {
 				this.description = description;
@@ -25,6 +25,7 @@ public class MacLayerRequest implements Serializable{
 	
 	private PRIMITIVE primitive;
 	private Beacon device;
+	private Beacon joinBeacon;
 	private long id;
 	private List<RFChannel> activeChannels;
 	private RFChannel channel;
@@ -86,6 +87,13 @@ public class MacLayerRequest implements Serializable{
 	public void setResponseRequired(boolean responseRequired) {
 		this.responseRequired = responseRequired;
 	}
+	public Beacon getJoinBeacon() {
+		return joinBeacon;
+	}
+	public void setJoinBeacon(Beacon joinBeacon) {
+		this.joinBeacon = joinBeacon;
+	}
+	
 	
 	
 }

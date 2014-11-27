@@ -6,7 +6,7 @@ public interface MacLayerInterface {
 	static final int MAC_LAYER_PORT = 6791;
 	static final int MAX_REQUEST = 5;
 	static final int REQUEST_TIME_OUT = 1000;
-	static final int BUFFER_SIZE = 1024;
+	static final int BUFFER_SIZE = 2048;
 	static final int ACCEPTABLE_ENERGY_LEVEL = 10;
 	
 	MacLayerResponse requestMacLayerNode(MacLayerRequest request);
@@ -16,7 +16,9 @@ public interface MacLayerInterface {
 	MacLayerResponse association(MacLayerRequest request);
 	MacLayerResponse start(MacLayerRequest request);
 	
+	MacLayerResponse getRegisteredNetworks(MacLayerRequest request);
 	MacLayerResponse getRegisteredDevices(MacLayerRequest request);
+	MacLayerResponse registerDevice(MacLayerRequest request);
 	MacLayerResponse getExtendedAddress(MacLayerRequest request);
 	
 }

@@ -21,6 +21,8 @@ public class NetworkLayerResponse implements Serializable{
 	private String message;
 	private long extendedPANID;
 	private Map<RFChannel, List<Beacon>>  availableNetworks;
+	private List<Beacon> neighbords;
+	private Beacon beacon;
 	
 	public CONFIRM getConfirm() {
 		return confirm;
@@ -46,6 +48,18 @@ public class NetworkLayerResponse implements Serializable{
 	public void setAvailableNetworks(
 			Map<RFChannel, List<Beacon>> availableNetworks) {
 		this.availableNetworks = availableNetworks;
+	}
+	public List<Beacon> getNeighbords() {
+		return neighbords;
+	}
+	public void setNeighbords(List<Beacon> neighbords) {
+		this.neighbords = neighbords;
+	}
+	public Beacon getBeacon() {
+		return beacon;
+	}
+	public void setBeacon(Beacon beacon) {
+		this.beacon = beacon;
 	}
 	
 	

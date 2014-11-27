@@ -8,7 +8,7 @@ public interface PhysicalLayerInterface {
 	static final int PHYSICAL_LAYER_PORT = 6792;
 	static final int MAX_REQUEST = 5;
 	static final int REQUEST_TIME_OUT = 1000;
-	static final int BUFFER_SIZE = 1024;
+	static final int BUFFER_SIZE = 2048;
 	
 	PhysicalLayerResponse requestPhysicalLayerNode(PhysicalLayerRequest request);
 	

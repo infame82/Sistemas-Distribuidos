@@ -2,7 +2,7 @@ package com.uag.sd.weathermonitor.gui.models;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.uag.sd.weathermonitor.model.endpoint.ZigBeeDevice;
+import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
 import com.uag.sd.weathermonitor.model.sensor.HumiditySensor;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 import com.uag.sd.weathermonitor.model.sensor.TemperatureSensor;
@@ -10,7 +10,7 @@ import com.uag.sd.weathermonitor.model.sensor.TemperatureSensor;
 public class SensorTableModel extends AbstractTableModel{
 	
 	//private List<Sensor> sensors;
-	private ZigBeeDevice zigBeeDevice;
+	private ZigBeeEndpoint zigBeeEndpoint;
 	private String[] columnNames = { "ID", "Type", "Lapse","Value",
 	        "Status" };
 
@@ -23,10 +23,10 @@ public class SensorTableModel extends AbstractTableModel{
 
 	@Override
 	public int getRowCount() {
-		if(zigBeeDevice==null || zigBeeDevice.getSensors()==null) {
+		if(zigBeeEndpoint==null || zigBeeEndpoint.getSensors()==null) {
 			return 0;
 		}
-		return zigBeeDevice.getSensors().size();
+		return zigBeeEndpoint.getSensors().size();
 	}
 
 	@Override
@@ -40,10 +40,10 @@ public class SensorTableModel extends AbstractTableModel{
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		if(zigBeeDevice==null || zigBeeDevice.getSensors()==null || zigBeeDevice.getSensors().isEmpty()) {
+		if(zigBeeEndpoint==null || zigBeeEndpoint.getSensors()==null || zigBeeEndpoint.getSensors().isEmpty()) {
 			return null;
 		}
-		Sensor sensor = zigBeeDevice.getSensors().get(rowIndex);
+		Sensor sensor = zigBeeEndpoint.getSensors().get(rowIndex);
 		switch(columnIndex) {
 		case 0:
 			return sensor.getId();
@@ -63,21 +63,21 @@ public class SensorTableModel extends AbstractTableModel{
 		return null;
 	}
 	
-	public void setEndpoint(ZigBeeDevice zigBeeDevice) {
-		this.zigBeeDevice = zigBeeDevice;
+	public void setEndpoint(ZigBeeEndpoint zigBeeEndpoint) {
+		this.zigBeeEndpoint = zigBeeEndpoint;
 		fireTableDataChanged();
 	}
 	
-	public ZigBeeDevice getEndpoint() {
-		return zigBeeDevice;
+	public ZigBeeEndpoint getEndpoint() {
+		return zigBeeEndpoint;
 	}
 	
 
 	
 	public int getIndexOf(Sensor sensor) {
 		int index = -1;
-		for(int i=0;i<zigBeeDevice.getSensors().size();i++) {
-			if(zigBeeDevice.getSensors().get(i).equals(sensor)) {
+		for(int i=0;i<zigBeeEndpoint.getSensors().size();i++) {
+			if(zigBeeEndpoint.getSensors().get(i).equals(sensor)) {
 				index = i;
 				break;
 			}
@@ -88,7 +88,7 @@ public class SensorTableModel extends AbstractTableModel{
 
 	
 	public void clear() {
-		zigBeeDevice.getSensors().clear();
+		zigBeeEndpoint.getSensors().clear();
 		fireTableDataChanged();
 	}
 

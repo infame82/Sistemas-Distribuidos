@@ -212,8 +212,8 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 	}
 
 	@Override
-	public MacLayerResponse getRegisteredDevices(MacLayerRequest request) {
-		return sendRequest(request, PRIMITIVE.REQUEST_REGISTERED_DEVICES);
+	public MacLayerResponse getRegisteredNetworks(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.REQUEST_REGISTERED_NETWORKS);
 	}
 
 	@Override
@@ -224,6 +224,37 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 	@Override
 	public MacLayerResponse association(MacLayerRequest request) {
 		return sendRequest(request, PRIMITIVE.ASSOCIATION);
+	}
+
+	@Override
+	public MacLayerResponse getRegisteredDevices(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.REQUEST_REGISTERED_DEVICES);
+	}
+
+	@Override
+	public MacLayerResponse registerDevice(MacLayerRequest request) {
+		MacLayerResponse response = new MacLayerResponse();
+		response.setConfirm(CONFIRM.SUCCESS);
+		request.setResponseRequired(false);
+		request.setId(System.currentTimeMillis());
+		request.setPrimitive(PRIMITIVE.REGISTER_DEVICE);
+		DatagramSocket socket = null;
+		try {
+			socket = new DatagramSocket();
+			byte[] requestContent = ObjectSerializer.serialize(request);
+			DatagramPacket packet = new DatagramPacket(requestContent,
+					requestContent.length, group, MAC_LAYER_PORT);
+			socket.send(packet);
+		}catch(Exception e) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			response.setMessage("Unable to REGISTER");
+		} finally {
+			if (socket != null) {
+				socket.close();
+			}
+		}
+		
+		return response;
 	}
 	
 	

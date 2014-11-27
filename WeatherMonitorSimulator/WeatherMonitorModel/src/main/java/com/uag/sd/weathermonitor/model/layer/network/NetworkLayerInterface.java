@@ -6,7 +6,7 @@ public interface NetworkLayerInterface {
 	static final int NETWORK_LAYER_PORT = 6790;
 	static final int MAX_REQUEST = 5;
 	static final int REQUEST_TIME_OUT = 1000;
-	static final int BUFFER_SIZE = 1024;
+	static final int BUFFER_SIZE = 2048;
 	
 	
 	
@@ -14,6 +14,7 @@ public interface NetworkLayerInterface {
 	NetworkLayerResponse requestNetworkLayerNode(NetworlLayerRequest request);
 	NetworkLayerResponse networkDiscovery(NetworlLayerRequest request);
 	NetworkLayerResponse netoworkJoin(NetworlLayerRequest request);
+	NetworkLayerResponse associate(NetworlLayerRequest request);
 	
 	
 	NetworkLayerResponse requestExtenedPanId(NetworlLayerRequest request);

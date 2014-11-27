@@ -3,6 +3,11 @@ package com.uag.sd.weathermonitor.model.device;
 import java.awt.Point;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -17,17 +22,19 @@ import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerNode;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
+import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
 public abstract class Device implements Serializable,Runnable,Beacon{
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -4733757119551961583L;
+	public enum TYPE{COORDINATOR,ROUTER,ENDPOINT};
 
 	
 	protected String id;
 	protected int panID;
-	protected long extendedPanID;
+	protected int extendedPanID;
 	
 	protected int potency;
 	protected int operatingChannel;
@@ -38,6 +45,8 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 	protected boolean allowJoin;
 	protected Point location;
 	protected boolean started;
+	protected Map<TYPE,List<Beacon>> neighbors;
+	
 	
 	protected transient DeviceLog log;
 	protected transient NetworkLayerNode networkLayerNode;
@@ -46,6 +55,59 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 	
 	protected transient NerworkLayerInterfaceClient networkInterfaceClient;
 	private transient ThreadPoolExecutor layerPoolExecutor;
+	
+	protected transient ThreadPoolExecutor executorService;
+
+	
+	private transient DatagramSocket listener;
+	public static final int BUFFER_SIZE = 2048;
+	
+	public class RequestResolver implements Runnable{
+		private final byte[] requestContent;	
+		public RequestResolver(byte[] requestContent) {
+			this.requestContent = requestContent;
+		}
+		@Override
+		public void run() {
+			try {
+				Object obj = ObjectSerializer.unserialize(requestContent);
+				if (obj instanceof DeviceLayerRequest) {
+					DeviceLayerResponse response = new DeviceLayerResponse();
+					response.setConfirm(DeviceLayerResponse.CONFIRM.SUCCESS);
+					DeviceLayerRequest request = (DeviceLayerRequest) obj;
+					if(request.getPrimitive()==DeviceLayerRequest.PRIMITIVE.ADD_NEIGHBORD) {
+						Beacon beacon = request.getNeighbord();
+						log.debug(new DeviceData(Device.this.id,"Registering neighbord "+beacon.getId()+", "+beacon.getIP()+":"+beacon.getPort()));
+						if(beacon.isCoordinator() && !alreadyRegistered(beacon, neighbors.get(TYPE.COORDINATOR))) {
+							neighbors.get(TYPE.COORDINATOR).add(beacon);
+						}else if(beacon.isRouter() && !alreadyRegistered(beacon, neighbors.get(TYPE.ROUTER))) {
+							neighbors.get(TYPE.ROUTER).add(beacon);
+						}else if(beacon.isEndpoint() && !alreadyRegistered(beacon, neighbors.get(TYPE.ENDPOINT))) {
+							neighbors.get(TYPE.ENDPOINT).add(beacon);
+						}else {
+							response.setConfirm(DeviceLayerResponse.CONFIRM.INVALID_REQUEST);
+							response.setMsg("Neighbord already exists");
+							log.debug(new DeviceData(Device.this.id,"Neighbord already exists "+beacon.getId()+", "+beacon.getIP()+":"+beacon.getPort()));
+						}
+					}else {
+						execute(request);
+					}
+				}
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private boolean alreadyRegistered(Beacon beacon,List<Beacon> beacons) {
+		for(Beacon registeredNeighbord:neighbors.get(TYPE.COORDINATOR)) {
+			if(registeredNeighbord.getIP().equals(beacon.getIP()) &&
+					registeredNeighbord.getPort() == beacon.getPort()) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 		
 	public Device(String id,DeviceLog log) throws IOException  {
@@ -57,56 +119,77 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 		started = false;
 		potency = 5;
 		location = new Point();
-		//log = new DefaultDeviceLog();
+		neighbors = new HashMap<Device.TYPE, List<Beacon>>();
+		neighbors.put(TYPE.COORDINATOR, new ArrayList<Beacon>());
+		neighbors.put(TYPE.ROUTER, new ArrayList<Beacon>());
+		neighbors.put(TYPE.ENDPOINT, new ArrayList<Beacon>());
 		layerPoolExecutor = (ThreadPoolExecutor) Executors
-				.newFixedThreadPool(10);
+				.newFixedThreadPool(3);
+		executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 		
 		physicalNode = new PhysicalLayerNode(this,log);
-		layerPoolExecutor.execute(physicalNode);
-		physicalNode.init();
-		
 		macLayerNode = new MacLayerNode(this,log);
-		layerPoolExecutor.execute(macLayerNode);
-		macLayerNode.init();
-		
 		networkLayerNode = new NetworkLayerNode(this,log);
+		
+		layerPoolExecutor.execute(physicalNode);
+		layerPoolExecutor.execute(macLayerNode);
 		layerPoolExecutor.execute(networkLayerNode);
+		
+		physicalNode.init();
+		macLayerNode.init();
 		networkLayerNode.init();
 		
 		networkInterfaceClient = new NerworkLayerInterfaceClient(this,log);
 		
+		
 	}
 	
+	protected int listenerPort;
+	protected String ipAddress;
 	
 	@Override
 	public void run() {
 		active = true;
 		log.debug(new DeviceData(id, "STARTED"));
+		DatagramPacket request = null;
 		try {
-			
-			
+			listener = new DatagramSocket();
+			listenerPort = listener.getLocalPort();
+			ipAddress = InetAddress.getLocalHost().getHostAddress();
+			log.info(new DeviceData(this.id, "Device Listening on: "+ipAddress+":"+listenerPort));
 			init();
 			while (active) {
-				execute();
-				Thread.sleep(0);
+				request = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
+				listener.receive(request);
+				executorService.submit(new RequestResolver(request.getData()));
 			}
-		} catch (InterruptedException e) {
+		} catch (IOException e) {
 			if(active) {
+				if(listener!=null) {
+					listener.close();
+				}
 				e.printStackTrace();
 			}
 		}finally {
 			log.debug(new DeviceData(id, "STOPPED"));
+			if(listener!=null) {
+				listener.close();
+			}
 		}
 		
 	}
 	
 	public void stop() {
+		active = false;
 		log.debug(new DeviceData(id, "STOPPING..."));
+		if(listener!=null) {
+			listener.close();
+		}
 		physicalNode.stop();
 		macLayerNode.stop();
 		networkLayerNode.stop();
 		
-		active = false;
+		
 	}
 	
 	public boolean networkFormation() {
@@ -139,12 +222,23 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 			log.debug(new DeviceData(id,response.getMessage()));
 			return false;
 		}
+		for(Beacon neighbor:response.getNeighbords()) {
+			if(neighbor.isCoordinator() && !alreadyRegistered(neighbor, neighbors.get(TYPE.COORDINATOR))) {
+				neighbors.get(TYPE.COORDINATOR).add(neighbor);
+			}else if(neighbor.isRouter() && !alreadyRegistered(neighbor, neighbors.get(TYPE.ROUTER))) {
+				neighbors.get(TYPE.ROUTER).add(neighbor);
+			}else if(neighbor.isEndpoint() && !alreadyRegistered(neighbor, neighbors.get(TYPE.ENDPOINT))) {
+				neighbors.get(TYPE.ENDPOINT).add(neighbor);
+			}
+		}
+		this.panID = response.getBeacon().getPanId();
+		this.extendedPanID = response.getBeacon().getExtendedPanID();
 		return true;
 	}
 	
 	protected abstract void init();
 	
-	protected abstract void execute();
+	protected  abstract void execute(DeviceLayerRequest request);
 	
 	
 	public int getOperatingChannel() {
@@ -224,11 +318,11 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 		this.started = started;
 	}
 	
-	public long getExtendedPanID() {
+	public int getExtendedPanID() {
 		return extendedPanID;
 	}
 	
-	public void setExtendedPanID(long extendedPanID) {
+	public void setExtendedPanID(int extendedPanID) {
 		this.extendedPanID = extendedPanID;
 	}
 	
@@ -260,6 +354,13 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 		this.allowJoin = allowJoin;
 	}
 	
+	public int getPort() {
+		return listenerPort;
+	}
+	
+	public String getIP() {
+		return ipAddress;
+	}
 	
 	
 }
