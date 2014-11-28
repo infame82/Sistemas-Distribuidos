@@ -3,6 +3,8 @@ package com.uag.sd.weathermonitor.model.sensor;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.uag.sd.weathermonitor.model.device.DeviceData.SENSOR_TYPE;
+
 @Component("temperatureSensor")
 @Scope("prototype")
 public class TemperatureSensor extends Sensor{
@@ -19,6 +21,11 @@ public class TemperatureSensor extends Sensor{
 		value = "27";
 		scale = SCALE.CELSIUS;
 	}
+	public TemperatureSensor(String id,String temperature) {
+		super(id);
+		value = temperature;
+		scale = SCALE.CELSIUS;
+	}
 	
 	public TemperatureSensor(SCALE scale) {
 		this();
@@ -27,11 +34,11 @@ public class TemperatureSensor extends Sensor{
 
 	@Override
 	public String detect() {
-		if(scale == SCALE.CELSIUS) {
-			return value+" ºC";
-		}else {
-			return value+" ºF";
-		}
+		return value;
+	}
+	@Override
+	public SENSOR_TYPE getType() {
+		return SENSOR_TYPE.T;
 	}
 
 }

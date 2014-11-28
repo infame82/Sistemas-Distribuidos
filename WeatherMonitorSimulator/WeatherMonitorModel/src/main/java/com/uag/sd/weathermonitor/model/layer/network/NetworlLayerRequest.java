@@ -3,8 +3,9 @@ package com.uag.sd.weathermonitor.model.layer.network;
 import java.io.Serializable;
 import java.util.List;
 
-import com.uag.sd.weathermonitor.model.device.Device;
 import com.uag.sd.weathermonitor.model.device.Beacon;
+import com.uag.sd.weathermonitor.model.device.Device;
+import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 
 public class NetworlLayerRequest implements Serializable {
@@ -17,7 +18,7 @@ public class NetworlLayerRequest implements Serializable {
 	public enum PRIMITIVE {
 		REQUEST_NETWORK_FORMATION("Network Formation"), REQUEST_NETWORK_NODE(
 				"Network Node"),REQUEST_EXTENDED_PAN_ID("Extened PAN ID"),NETWORK_DISCOVERY("Network Discovery")
-				,NETWORK_JOIN("Network Join"),ASSOCIATE("Associate");
+				,NETWORK_JOIN("Network Join"),ASSOCIATE("Associate"),TRANSMIT("Transmit");
 		public String description;
 
 		private PRIMITIVE(String description) {
@@ -29,6 +30,7 @@ public class NetworlLayerRequest implements Serializable {
 	private Beacon device;
 	private Beacon joinBeacon;
 	private List<Beacon> associateBeacons;
+	private DeviceData data;
 	private RFChannel channel;
 	private long id;
 
@@ -99,6 +101,14 @@ public class NetworlLayerRequest implements Serializable {
 
 	public void setAssociateBeacons(List<Beacon> associateBeacons) {
 		this.associateBeacons = associateBeacons;
+	}
+
+	public DeviceData getData() {
+		return data;
+	}
+
+	public void setData(DeviceData data) {
+		this.data = data;
 	}
 	
 	

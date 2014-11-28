@@ -256,6 +256,11 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 		
 		return response;
 	}
+
+	@Override
+	public MacLayerResponse transmission(MacLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.TRANSMISSION);
+	}
 	
 	
 	

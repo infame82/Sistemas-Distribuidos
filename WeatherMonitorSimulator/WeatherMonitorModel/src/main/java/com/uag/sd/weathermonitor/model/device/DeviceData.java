@@ -1,9 +1,19 @@
 package com.uag.sd.weathermonitor.model.device;
 
-public class DeviceData {
+import java.io.Serializable;
 
+public class DeviceData implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2868862113403179898L;
+	public enum SENSOR_TYPE{T,H};
+	
 	private String deviceId;
 	private Object data;
+	private SENSOR_TYPE type;
+	
 	
 	public DeviceData(String deviceId,Object data) {
 		this.deviceId = deviceId;
@@ -21,6 +31,14 @@ public class DeviceData {
 	}
 	public void setData(Object data) {
 		this.data = data;
+	}
+
+	public SENSOR_TYPE getType() {
+		return type;
+	}
+
+	public void setType(SENSOR_TYPE type) {
+		this.type = type;
 	}
 	
 	

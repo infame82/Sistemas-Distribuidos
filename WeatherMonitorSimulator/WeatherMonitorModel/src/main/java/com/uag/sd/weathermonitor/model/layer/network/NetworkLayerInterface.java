@@ -15,6 +15,7 @@ public interface NetworkLayerInterface {
 	NetworkLayerResponse networkDiscovery(NetworlLayerRequest request);
 	NetworkLayerResponse netoworkJoin(NetworlLayerRequest request);
 	NetworkLayerResponse associate(NetworlLayerRequest request);
+	NetworkLayerResponse transmitData(NetworlLayerRequest request);
 	
 	
 	NetworkLayerResponse requestExtenedPanId(NetworlLayerRequest request);

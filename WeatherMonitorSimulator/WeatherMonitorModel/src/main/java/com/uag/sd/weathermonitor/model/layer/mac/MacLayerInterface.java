@@ -14,6 +14,7 @@ public interface MacLayerInterface {
 	MacLayerResponse activeScan(MacLayerRequest request);
 	MacLayerResponse setPANId(MacLayerRequest request);
 	MacLayerResponse association(MacLayerRequest request);
+	MacLayerResponse transmission(MacLayerRequest request);
 	MacLayerResponse start(MacLayerRequest request);
 	
 	MacLayerResponse getRegisteredNetworks(MacLayerRequest request);

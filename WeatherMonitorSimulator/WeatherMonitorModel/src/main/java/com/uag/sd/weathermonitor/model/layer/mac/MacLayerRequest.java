@@ -16,7 +16,8 @@ public class MacLayerRequest implements Serializable{
 	public enum PRIMITIVE{REQUEST_MAC_NODE("MAC Node"),ENERGY_DETECTION_SCAN("Energy Detection Scan"),
 		ACTIVE_SCAN("Active Scan"),SET_PAN_ID("Set PAN ID"),START("Start"),INVALID_REQUEST("Invalid Request"),
 		REQUEST_REGISTERED_NETWORKS("Get Registered Networks"),REQUEST_EXTENED_ADDRESS("Get Extended Address"),
-		ASSOCIATION("Association"),REQUEST_REGISTERED_DEVICES("Get Registered Devices"),REGISTER_DEVICE("Register Device");
+		ASSOCIATION("Association"),REQUEST_REGISTERED_DEVICES("Get Registered Devices"),REGISTER_DEVICE("Register Device"),
+		TRANSMISSION("Transmission");
 			public String description;
 			private PRIMITIVE(String description) {
 				this.description = description;

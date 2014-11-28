@@ -60,7 +60,8 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 
 	
 	private transient DatagramSocket listener;
-	public static final int BUFFER_SIZE = 2048;
+	public static final int BUFFER_SIZE = 1536;
+	//public static final int DATA_BUFFER_SIZE = 2048;
 	
 	public class RequestResolver implements Runnable{
 		private final byte[] requestContent;	
@@ -74,24 +75,26 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 				if (obj instanceof DeviceLayerRequest) {
 					DeviceLayerResponse response = new DeviceLayerResponse();
 					response.setConfirm(DeviceLayerResponse.CONFIRM.SUCCESS);
-					DeviceLayerRequest request = (DeviceLayerRequest) obj;
-					if(request.getPrimitive()==DeviceLayerRequest.PRIMITIVE.ADD_NEIGHBORD) {
-						Beacon beacon = request.getNeighbord();
-						log.debug(new DeviceData(Device.this.id,"Registering neighbord "+beacon.getId()+", "+beacon.getIP()+":"+beacon.getPort()));
-						if(beacon.isCoordinator() && !alreadyRegistered(beacon, neighbors.get(TYPE.COORDINATOR))) {
-							neighbors.get(TYPE.COORDINATOR).add(beacon);
-						}else if(beacon.isRouter() && !alreadyRegistered(beacon, neighbors.get(TYPE.ROUTER))) {
-							neighbors.get(TYPE.ROUTER).add(beacon);
-						}else if(beacon.isEndpoint() && !alreadyRegistered(beacon, neighbors.get(TYPE.ENDPOINT))) {
-							neighbors.get(TYPE.ENDPOINT).add(beacon);
-						}else {
-							response.setConfirm(DeviceLayerResponse.CONFIRM.INVALID_REQUEST);
-							response.setMsg("Neighbord already exists");
-							log.debug(new DeviceData(Device.this.id,"Neighbord already exists "+beacon.getId()+", "+beacon.getIP()+":"+beacon.getPort()));
+					if(obj instanceof DeviceLayerRequest) {
+						DeviceLayerRequest request = (DeviceLayerRequest) obj;
+						if(request.getPrimitive()==DeviceLayerRequest.PRIMITIVE.ADD_NEIGHBORD) {
+							Beacon beacon = request.getNeighbord();
+							log.debug(new DeviceData(Device.this.id,"Registering neighbord "+beacon.getId()+", "+beacon.getIP()+":"+beacon.getPort()));
+							if(beacon.isCoordinator() && !alreadyRegistered(beacon, neighbors.get(TYPE.COORDINATOR))) {
+								neighbors.get(TYPE.COORDINATOR).add(beacon);
+							}else if(beacon.isRouter() && !alreadyRegistered(beacon, neighbors.get(TYPE.ROUTER))) {
+								neighbors.get(TYPE.ROUTER).add(beacon);
+							}else if(beacon.isEndpoint() && !alreadyRegistered(beacon, neighbors.get(TYPE.ENDPOINT))) {
+								neighbors.get(TYPE.ENDPOINT).add(beacon);
+							}else {
+								response.setConfirm(DeviceLayerResponse.CONFIRM.INVALID_REQUEST);
+								response.setMsg("Neighbord already exists");
+								log.debug(new DeviceData(Device.this.id,"Neighbord already exists "+beacon.getId()+", "+beacon.getIP()+":"+beacon.getPort()));
+							}
 						}
-					}else {
-						execute(request);
 					}
+				}else if(obj instanceof DataMessage){
+					execute((DataMessage)obj);
 				}
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
@@ -238,7 +241,7 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 	
 	protected abstract void init();
 	
-	protected  abstract void execute(DeviceLayerRequest request);
+	protected  abstract void execute(DataMessage request);
 	
 	
 	public int getOperatingChannel() {

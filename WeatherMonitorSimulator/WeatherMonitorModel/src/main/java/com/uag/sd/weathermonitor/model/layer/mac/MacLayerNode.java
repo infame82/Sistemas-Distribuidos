@@ -160,6 +160,8 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 						response = activeScan(request);
 					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.ASSOCIATION) {
 						response = association(request);
+					}else if (request.getPrimitive() == MacLayerRequest.PRIMITIVE.TRANSMISSION) {
+						response = transmission(request);
 					}
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -554,6 +556,36 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		networkDevices.add(request.getDevice());
 		log.debug(new DeviceData(traceableDevice.getId(),"Registering neighbord "+request.getDevice().getId()+", "+request.getDevice().getIP()+":"+request.getDevice().getPort()));
 		registeredDevices.put(deviceNwId, networkDevices);
+		return response;
+	}
+
+	@Override
+	public MacLayerResponse transmission(MacLayerRequest request) {
+		MacLayerResponse response = new MacLayerResponse();
+		
+		List<Beacon> beacons = null;
+		RFChannel transmissionChannel = null;
+		for(RFChannel channel:registeredNetworks.keySet()) {
+			beacons = registeredNetworks.get(channel);
+			if(beacons!=null && !beacons.isEmpty()) {
+				for(Beacon beacon:beacons) {
+					if(beacon.getPanId() == request.getDevice().getPanId() && 
+					   beacon.getExtendedPanID() == request.getDevice().getExtendedPanID()) {
+						transmissionChannel = channel;
+						break;
+					}
+				}
+			}
+		}
+		if(transmissionChannel==null) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			response.setMessage("Unable to find network in channel to transmit");
+			return response;
+		}
+		response.setConfirm(CONFIRM.SUCCESS);
+		PhysicalLayerRequest phyRequest = new PhysicalLayerRequest();
+		phyRequest.setSelectedChannel(transmissionChannel.getChannel());
+		physicalClient.increaseEnergyLevel(phyRequest);
 		return response;
 	}
 

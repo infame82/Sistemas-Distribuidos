@@ -21,6 +21,7 @@ import com.uag.sd.weathermonitor.model.device.ZigBeeCoordinator;
 import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
+import com.uag.sd.weathermonitor.model.sensor.TemperatureSensor;
 
 @ContextConfiguration(locations = { "classpath:META-INF/spring/spring-ctx.xml" })
 public class TestEndpoint  extends AbstractTestNGSpringContextTests {
@@ -36,8 +37,12 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 	
 	//@Autowired
 	//@Qualifier("zigBeeDevice")
-	private ZigBeeCoordinator coordinator;
-	private ZigBeeEndpoint endpoint;
+	private ZigBeeCoordinator c1;
+	private ZigBeeEndpoint e13;
+	private ZigBeeEndpoint e14;
+	private ZigBeeEndpoint e15;
+	private ZigBeeEndpoint e16;
+	
 	
 	//@Autowired
 	//@Qualifier("zigBeeRouter")
@@ -54,12 +59,29 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 		hSensor.setId("H1");
 		DeviceLog coordinatorLog = new DefaultDeviceLog();
 		DeviceLog endpointLog = new DefaultDeviceLog();
-		coordinator = new ZigBeeCoordinator("Coordinator 00", coordinatorLog);
-		coordinator.setLocation(4, 4);
-		coordinator.setPotency(2);
-		endpoint = new ZigBeeEndpoint("Endpoint 01", endpointLog, endpointLog);
-		endpoint.setLocation(7,1);
-		endpoint.setPotency(2);
+		c1 = new ZigBeeCoordinator("Coordinator 00", coordinatorLog);
+		c1.setLocation(9, 2);
+		c1.setPotency(3);
+		
+		e13 = new ZigBeeEndpoint("Endpoint 13", endpointLog, endpointLog);
+		e13.setLocation(7,1);
+		e13.setPotency(1);
+		e13.addSensor(new TemperatureSensor("T13","22"));
+		
+		e14 = new ZigBeeEndpoint("Endpoint 14", endpointLog, endpointLog);
+		e14.setLocation(7,3);
+		e14.setPotency(1);
+		e14.addSensor(new TemperatureSensor("T14","23"));
+		
+		e15 = new ZigBeeEndpoint("Endpoint 15", endpointLog, endpointLog);
+		e15.setLocation(7,5);
+		e15.setPotency(1);
+		e15.addSensor(new TemperatureSensor("T15","24"));
+		
+		e16 = new ZigBeeEndpoint("Endpoint 16", endpointLog, endpointLog);
+		e16.setLocation(7,7);
+		e16.setPotency(1);
+		e16.addSensor(new TemperatureSensor("T16","25"));
 	}
 	
 	public static boolean isCovered(Point a,int pA,Point b,int pB) {
@@ -69,27 +91,63 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 	
 	@Test
 	public void testEndpoint() throws InterruptedException {
-		service.execute(coordinator);
-		service.execute(endpoint);
+		service.execute(c1);
+		service.execute(e13);
+		service.execute(e14);
+		service.execute(e15);
+		service.execute(e16);
 		//service.execute(zigBeeRouter);
 		Thread.sleep(3000);
 		
-		coordinator.networkFormation();
-		Map<RFChannel, List<Beacon>> availableNetworksMap = endpoint.networkDiscovery();
+		c1.networkFormation();
+		
+		Map<RFChannel, List<Beacon>> availableNetworksMap = e13.networkDiscovery();
 		for(RFChannel channel:availableNetworksMap.keySet()) {
 			List<Beacon> beacons = availableNetworksMap.get(channel);
 			if(beacons!=null && !beacons.isEmpty()) {
 				Beacon beacon = beacons.get(0);
-				endpoint.networkJoin(channel, beacon);
+				e13.networkJoin(channel, beacon);
 				break;
 			}
 		}
 		
+		availableNetworksMap = e14.networkDiscovery();
+		for(RFChannel channel:availableNetworksMap.keySet()) {
+			List<Beacon> beacons = availableNetworksMap.get(channel);
+			if(beacons!=null && !beacons.isEmpty()) {
+				Beacon beacon = beacons.get(0);
+				e14.networkJoin(channel, beacon);
+				break;
+			}
+		}
+		
+		availableNetworksMap = e15.networkDiscovery();
+		for(RFChannel channel:availableNetworksMap.keySet()) {
+			List<Beacon> beacons = availableNetworksMap.get(channel);
+			if(beacons!=null && !beacons.isEmpty()) {
+				Beacon beacon = beacons.get(0);
+				e15.networkJoin(channel, beacon);
+				break;
+			}
+		}
+		
+		availableNetworksMap = e16.networkDiscovery();
+		for(RFChannel channel:availableNetworksMap.keySet()) {
+			List<Beacon> beacons = availableNetworksMap.get(channel);
+			if(beacons!=null && !beacons.isEmpty()) {
+				Beacon beacon = beacons.get(0);
+				e16.networkJoin(channel, beacon);
+				break;
+			}
+		}
+		
+		
+		
 		//zigBeeRouter.setCoordinator(true);
 		//zigBeeRouter.establishNetwork();
 		Thread.sleep(20000);
-		coordinator.stop();
-		endpoint.stop();
+		c1.stop();
+		e13.stop();
 		//zigBeeRouter.stop();
 		Thread.sleep(5000);
 	}

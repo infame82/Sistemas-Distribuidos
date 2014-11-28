@@ -1,7 +1,6 @@
 package com.uag.sd.weathermonitor.model.device;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 
 public class ZigBeeCoordinator extends Device {
 
@@ -18,14 +17,11 @@ public class ZigBeeCoordinator extends Device {
 
 	@Override
 	protected void init() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
-	protected void execute(DeviceLayerRequest request) {
-		// TODO Auto-generated method stub
-		
+	protected void execute(DataMessage msg) {
+		log.info(new DeviceData(this.id, "Msg from "+msg.getBeacon().getId()+", data:"+msg.getData()+", Type:"+msg.getType()));
 	}
 
 }

@@ -1,7 +1,6 @@
 package com.uag.sd.weathermonitor.model.device;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,6 +8,7 @@ import java.util.List;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 import com.uag.sd.weathermonitor.model.sensor.SensorMonitor;
 
@@ -119,9 +119,21 @@ public class ZigBeeEndpoint extends Device implements SensorMonitor {
 		if (!active) {
 			return;
 		}
-		if (sensorLog != null) {
-			sensorLog.info(data);
+		NetworlLayerRequest request = new NetworlLayerRequest();
+		
+		List<Beacon> parents = new ArrayList<Beacon>();
+		if(!neighbors.get(TYPE.COORDINATOR).isEmpty()) {
+			parents.addAll(neighbors.get(TYPE.COORDINATOR));
+		}else {
+			parents.addAll(neighbors.get(TYPE.ROUTER));
 		}
+		request.setDevice(this);
+		request.setData(data);
+		request.setAssociateBeacons(parents);
+		networkInterfaceClient.transmitData(request);
+		/*if (sensorLog != null) {
+			sensorLog.info(data);
+		}*/
 	}
 
 	public boolean equals(Object o) {
@@ -156,7 +168,7 @@ public class ZigBeeEndpoint extends Device implements SensorMonitor {
 	}
 
 	@Override
-	protected void execute(DeviceLayerRequest request) {
+	protected void execute(DataMessage msg) {
 	}
 
 }

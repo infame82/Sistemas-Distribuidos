@@ -23,6 +23,7 @@ import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.TransactionException;
 
 import com.uag.sd.weathermonitor.model.device.Beacon;
+import com.uag.sd.weathermonitor.model.device.DataMessage;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLayerRequest;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
@@ -159,6 +160,8 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 						response = netoworkJoin(request);
 					} else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.ASSOCIATE) {
 						response = associate(request);
+					}else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.TRANSMIT) {
+						response = transmitData(request);
 					}
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -529,6 +532,43 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			}
 		}
 		return response;
+	}
+
+	@Override
+	public NetworkLayerResponse transmitData(NetworlLayerRequest request) {
+		NetworkLayerResponse response = new NetworkLayerResponse();
+		MacLayerRequest macRequest = new MacLayerRequest();
+		macRequest.setDevice(request.getDevice());
+		MacLayerResponse macResponse = macInterfaceClient.transmission(macRequest);
+		if(macResponse.getConfirm() == MacLayerResponse.CONFIRM.INVALID_REQUEST) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			response.setMessage("Unable to transmit");
+			return response;
+		}
+		DataMessage msg = new DataMessage();
+		msg.setData(request.getData().getData().toString());
+		msg.setType(request.getData().getType());
+		msg.setBeacon(request.getDevice());
+		msg.setExpiration(5);
+		msg.setId(new Random().nextInt());
+		DatagramSocket sender = null;
+		try {
+			byte[] msgBytes = ObjectSerializer.serialize(msg);
+			sender = new DatagramSocket();
+			for(Beacon neighbord:request.getAssociateBeacons()) {
+				sender.send(new DatagramPacket(msgBytes, msgBytes.length,InetAddress.getByName(neighbord.getIP()),neighbord.getPort()));
+			}
+		} catch (IOException e) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			response.setMessage("Unable to transmit");
+			e.printStackTrace();
+		}finally {
+			if(sender!=null) {
+				sender.close();
+			}
+		}
+		
+		return null;
 	}
 
 }

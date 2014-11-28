@@ -42,7 +42,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 	
 	private class EnergyLevelStabilizer implements Runnable{
 
-		private int timer = 10000;
+		private int timer = 1000;
 		@Override
 		public void run() {
 			while(isListening) {

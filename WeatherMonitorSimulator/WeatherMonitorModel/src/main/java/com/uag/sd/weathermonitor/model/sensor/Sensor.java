@@ -3,6 +3,7 @@ package com.uag.sd.weathermonitor.model.sensor;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
 import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
+import com.uag.sd.weathermonitor.model.device.DeviceData.SENSOR_TYPE;
 
 public abstract class Sensor implements Runnable{
 
@@ -43,7 +44,9 @@ public abstract class Sensor implements Runnable{
 		}
 		while (active) {
 			if(monitor!=null) {
-				monitor.notify(new DeviceData(id, detect()));
+				DeviceData data = new DeviceData(id, detect());
+				data.setType(getType());
+				monitor.notify(data);
 			}
 			try {
 				Thread.sleep(lapse);
@@ -113,5 +116,6 @@ public abstract class Sensor implements Runnable{
 		this.log = log;
 	}
 	
+	public abstract SENSOR_TYPE getType();
 	
 }

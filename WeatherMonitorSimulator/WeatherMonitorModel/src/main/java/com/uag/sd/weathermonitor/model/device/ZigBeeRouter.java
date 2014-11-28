@@ -67,5 +67,5 @@ public class ZigBeeRouter extends Device {
 	protected void init() {}
 
 	@Override
-	protected void execute(DeviceLayerRequest request) {}
+	protected void execute(DataMessage msg) {}
 }
