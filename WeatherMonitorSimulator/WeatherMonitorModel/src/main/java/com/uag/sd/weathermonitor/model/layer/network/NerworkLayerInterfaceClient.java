@@ -56,31 +56,29 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 			byte[] requestContent = ObjectSerializer.serialize(request);
 			DatagramPacket packet = new DatagramPacket(requestContent,
 					requestContent.length, group, NETWORK_LAYER_PORT);
-			mainLoop: while (!availableNode) {
+			main: while (!availableNode) {
 				counter++;
-				log.debug(new DeviceData(device.getId(),
-						"Requesting network layer node (" + counter + ")"));
 				socket.send(packet);
 				socket.setSoTimeout(REQUEST_TIME_OUT);
 				DatagramPacket reply = null;
 				try {
-					//while (true) {
+					while(true) {
 						reply = new DatagramPacket(new byte[BUFFER_SIZE],
 								BUFFER_SIZE);
 						socket.receive(reply);
 						response = (NetworkLayerResponse) ObjectSerializer
 								.unserialize(reply.getData());
-						availableNode = response.getConfirm() == CONFIRM.SUCCESS;
-						if (availableNode) {
-							break mainLoop;
+						if (response.getConfirm() == CONFIRM.SUCCESS) {
+							break main;
 						}
-					//}
+					}
 				} catch (SocketTimeoutException ste) {
 					log.debug(new DeviceData(device.getId(),
-							"Network layer node not available (" + counter + ")"));
+							"Network layer node not available (" + counter
+									+ ")"));
 
 				}
-				if(counter==MAX_REQUEST) {
+				if (counter == MAX_REQUEST) {
 					response.setMessage("Not able to find an available netowork node");
 					break;
 				}
@@ -96,10 +94,7 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 				socket.close();
 			}
 		}
-		if (availableNode) {
-			log.debug(new DeviceData(device.getId(),
-					"Available network layer node :" + response.getMessage()));
-		}
+
 		return response;
 	}
 
@@ -176,7 +171,7 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 	}
 
 	@Override
-	public NetworkLayerResponse netoworkJoin(NetworlLayerRequest request) {
+	public NetworkLayerResponse networkJoin(NetworlLayerRequest request) {
 		return sendRequest(request, PRIMITIVE.NETWORK_JOIN);
 	}
 
@@ -188,6 +183,11 @@ public class NerworkLayerInterfaceClient implements NetworkLayerInterface {
 	@Override
 	public NetworkLayerResponse transmitData(NetworlLayerRequest request) {
 		return sendRequest(request, PRIMITIVE.TRANSMIT);
+	}
+
+	@Override
+	public NetworkLayerResponse retransmitData(NetworlLayerRequest request) {
+		return sendRequest(request, PRIMITIVE.RETRANSMIT);
 	}
 
 }

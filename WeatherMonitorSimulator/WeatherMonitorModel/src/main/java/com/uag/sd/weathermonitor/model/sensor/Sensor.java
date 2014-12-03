@@ -16,7 +16,7 @@ public abstract class Sensor implements Runnable{
 	protected DeviceLog log;
 	
 	//In milliseconds, 5000 = 5 sec
-	public static final long DEFAULT_LAPSE = 5000;
+	public static final long DEFAULT_LAPSE = 30000;
 	
 	public Sensor() {
 		active = false;

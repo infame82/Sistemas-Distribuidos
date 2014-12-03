@@ -1,11 +1,14 @@
 package com.uag.sd.weathermonitor.model.device;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import com.uag.sd.weathermonitor.model.layer.network.NetworlLayerRequest;
 
 @Component("zigBeeRouter")
 @Scope("prototype")
@@ -67,5 +70,19 @@ public class ZigBeeRouter extends Device {
 	protected void init() {}
 
 	@Override
-	protected void execute(DataMessage msg) {}
+	protected void execute(DataMessage msg) {
+		NetworlLayerRequest request = new NetworlLayerRequest();
+		
+		List<Beacon> parents = new ArrayList<Beacon>();
+		if(!neighbors.get(TYPE.COORDINATOR).isEmpty()) {
+			parents.addAll(neighbors.get(TYPE.COORDINATOR));
+		}else {
+			parents.addAll(neighbors.get(TYPE.ROUTER));
+		}
+		//System.out.println("-->"+this.id+"-->"+neighbors);
+		request.setDevice(msg.getBeacon());
+		request.setData(msg);
+		request.setAssociateBeacons(parents);
+		networkInterfaceClient.retransmitData(request);
+	}
 }

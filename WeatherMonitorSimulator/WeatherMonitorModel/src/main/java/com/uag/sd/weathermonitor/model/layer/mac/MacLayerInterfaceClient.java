@@ -57,28 +57,25 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 					requestContent.length, group, MAC_LAYER_PORT);
 			mainLoop: while (!availableNode) {
 				counter++;
-				log.debug(new DeviceData(device.getId(), "Requesting MAC Layer Node ("+counter+")"));
 				socket.send(packet);
 				socket.setSoTimeout(REQUEST_TIME_OUT);
 				DatagramPacket reply = null;
 				try {
-					//while (true) {
+					while (true) {
 						reply = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
 						socket.receive(reply);
 						response = (MacLayerResponse) ObjectSerializer
 								.unserialize(reply.getData());
-						availableNode = response.getConfirm() == CONFIRM.SUCCESS;
-						if (availableNode) {
+						if (response.getConfirm() == CONFIRM.SUCCESS) {
 							break mainLoop;
 						}
-			//		}
-				} catch (SocketTimeoutException ste) {
-					
+					}
+				} catch (SocketTimeoutException ste) {					
 					log.debug(new DeviceData(device.getId(), "MAC layer node not available ("+counter+")"));
 					
 				}
 				if(counter==MAX_REQUEST) {
-					response.setMessage("Not able to find an available mac node");
+					response.setMessage("Not able to find an available MAC node");
 					break;
 				}
 			}
@@ -93,9 +90,7 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 				socket.close();
 			}
 		}
-		if(availableNode) {
-			log.debug(new DeviceData(device.getId(), "Available MAC Layer Node :"+response.getMessage()));
-		}
+		
 		return response;
 	}
 	

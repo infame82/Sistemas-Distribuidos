@@ -48,8 +48,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 	private Random random;
 
 	private MacLayerInterfaceClient macInterfaceClient;
-	//private NerworkLayerInterfaceClient networkClient;
-	//private long extendedPANId;
+	public final static int THREADS = 5;
 
 	private static final List<RFChannel> channels = new ArrayList<RFChannel>();
 
@@ -98,16 +97,6 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		private void resolveRequest(NetworlLayerRequest request)
 				throws IOException, UnusableEntryException,
 				TransactionException, InterruptedException {
-			/*
-			 * Lookup spaceFinder = new Lookup(JavaSpace.class); JavaSpace space
-			 * = (JavaSpace) spaceFinder.getService();
-			 * 
-			 * NetworlLayerRequest entry = (NetworlLayerRequest)
-			 * space.readIfExists(request, null, JavaSpace.NO_WAIT);
-			 * if(entry==null) { Lease lease = space.write(request,null,30000);
-			 * 
-			 * }
-			 */
 			NetworkLayerResponse response = new NetworkLayerResponse();
 			response.setConfirm(CONFIRM.INVALID_REQUEST);
 			response.setMessage("Invalid Primitive");
@@ -126,11 +115,9 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 	}
 
 	private class TcpNetworkRequestConnection implements Runnable {
-
 		private ServerSocket socket;
 		private boolean active;
 		private ThreadPoolExecutor requestExecutor;
-
 		private class TcpNetworkRequesResolver implements Runnable {
 			private Socket socket;
 			private ObjectInputStream in;
@@ -141,7 +128,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 				in = new ObjectInputStream(socket.getInputStream());
 				out = new ObjectOutputStream(socket.getOutputStream());
 			}
-
+			
 			@Override
 			public void run() {
 				NetworkLayerResponse response = new NetworkLayerResponse();
@@ -157,11 +144,13 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 					} else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.NETWORK_DISCOVERY) {
 						response = networkDiscovery(request);
 					} else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.NETWORK_JOIN) {
-						response = netoworkJoin(request);
+						response = networkJoin(request);
 					} else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.ASSOCIATE) {
 						response = associate(request);
 					}else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.TRANSMIT) {
 						response = transmitData(request);
+					}else if (request.getPrimitive() == NetworlLayerRequest.PRIMITIVE.RETRANSMIT) {
+						response = retransmitData(request);
 					}
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -186,7 +175,11 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 							+ ") opened."));
 			active = false;
 			requestExecutor = (ThreadPoolExecutor) Executors
-					.newFixedThreadPool(10);
+					.newFixedThreadPool(THREADS);
+		}
+		
+		public boolean isBusy() {
+			return requestExecutor.getActiveCount()>=5;
 		}
 
 		@Override
@@ -229,7 +222,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		random = new Random();
 		this.traceableDevice = traceableDevice;
 		isListening = false;
-		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(THREADS);
 		macInterfaceClient = new MacLayerInterfaceClient(traceableDevice, log);
 		//networkClient = new NerworkLayerInterfaceClient(traceableDevice, log);
 		this.log = log;
@@ -276,8 +269,9 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			if (isListening) {
 				log.debug(new DeviceData(traceableDevice.getId(), e1
 						.getMessage()));
-				e1.printStackTrace();
+				
 			}
+			e1.printStackTrace();
 		} finally {
 			log.debug(new DeviceData(traceableDevice.getId(),
 					"Network Layer Node stopped on " + NETWORK_LAYER_ADDRESS
@@ -385,7 +379,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 	}
 
 	@Override
-	public NetworkLayerResponse netoworkJoin(NetworlLayerRequest request) {
+	public NetworkLayerResponse networkJoin(NetworlLayerRequest request) {
 		log.info(new DeviceData(traceableDevice.getId(), "Request ID ('"
 				+ request.getId() + "'), Device ("
 				+ request.getDevice().getId() + ") is requesting Network Join"));
@@ -398,9 +392,23 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		macRequest.setJoinBeacon(request.getJoinBeacon());
 		MacLayerResponse macResponse = macInterfaceClient.association(macRequest);
 		if(macResponse.getConfirm()==MacLayerResponse.CONFIRM.SUCCESS) {
-			response.setConfirm(CONFIRM.SUCCESS);
-			response.setNeighbords(macResponse.getNeighbords());
-			response.setBeacon(macResponse.getBeacon());
+			
+			if(device.isRouter()) {
+				device.setExtendedPanID(macResponse.getBeacon().getExtendedPanID());
+				device.setPanId(macResponse.getBeacon().getPanId());
+				macRequest = new MacLayerRequest();
+				macRequest.setDevice(device);
+				macRequest.setChannel(request.getChannel());
+				if(macInterfaceClient.start(macRequest).getConfirm() == MacLayerResponse.CONFIRM.SUCCESS) {
+					response.setConfirm(CONFIRM.SUCCESS);
+					response.setNeighbords(macResponse.getNeighbords());
+					response.setBeacon(macResponse.getBeacon());
+				}
+			}else {
+				response.setConfirm(CONFIRM.SUCCESS);
+				response.setNeighbords(macResponse.getNeighbords());
+				response.setBeacon(macResponse.getBeacon());
+			}
 		}
 		return response;
 	}
@@ -480,11 +488,12 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 	@Override
 	public synchronized NetworkLayerResponse requestNetworkLayerNode(
 			NetworlLayerRequest request) {
-		log.info(new DeviceData(traceableDevice.getId(), "Request ID ('"
-				+ request.getId() + "'), Device ("
-				+ request.getDevice().getId()
-				+ ") is requesting a Network Layer Node"));
+
 		NetworkLayerResponse response = new NetworkLayerResponse();
+		if(tcpNetworkRequestConnection.isBusy()) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			return response;
+		}
 		response.setConfirm(CONFIRM.SUCCESS);
 		StringBuilder builder = new StringBuilder();
 		ServerSocket socket = tcpNetworkRequestConnection.getSocket();
@@ -496,8 +505,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		builder.append(":");
 		builder.append(socket.getLocalPort());
 		response.setMessage(builder.toString());
-		log.info(new DeviceData(traceableDevice.getId(), "Request ID ('"
-				+ request.getId() + "'), available Network Node"));
+
 		return response;
 	}
 
@@ -545,10 +553,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			response.setMessage("Unable to transmit");
 			return response;
 		}
-		DataMessage msg = new DataMessage();
-		msg.setData(request.getData().getData().toString());
-		msg.setType(request.getData().getType());
-		msg.setBeacon(request.getDevice());
+		DataMessage msg = request.getData();
 		msg.setExpiration(5);
 		msg.setId(new Random().nextInt());
 		DatagramSocket sender = null;
@@ -567,8 +572,51 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 				sender.close();
 			}
 		}
+		response.setConfirm(CONFIRM.SUCCESS);
+		response.setMessage("OK");
+		return response;
+	}
+	
+	@Override
+	public NetworkLayerResponse retransmitData(NetworlLayerRequest request) {
+		NetworkLayerResponse response = new NetworkLayerResponse();
+		DataMessage msg = request.getData();
+		msg.setExpiration(msg.getExpiration()-1);
+		if(msg.getExpiration()==0) {
+			response.setConfirm(CONFIRM.EXPIRED);
+			response.setMessage("Expired Msg");
+			return response;
+		}
 		
-		return null;
+		
+		/*MacLayerRequest macRequest = new MacLayerRequest();
+		macRequest.setDevice(request.getDevice());
+		MacLayerResponse macResponse = macInterfaceClient.transmission(macRequest);
+		if(macResponse.getConfirm() == MacLayerResponse.CONFIRM.INVALID_REQUEST) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			response.setMessage("Unable to transmit");
+			return response;
+		}*/
+		
+		
+		DatagramSocket sender = null;
+		try {
+			byte[] msgBytes = ObjectSerializer.serialize(msg);
+			sender = new DatagramSocket();
+			for(Beacon neighbord:request.getAssociateBeacons()) {
+				sender.send(new DatagramPacket(msgBytes, msgBytes.length,InetAddress.getByName(neighbord.getIP()),neighbord.getPort()));
+			}
+		} catch (IOException e) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			response.setMessage("Unable to transmit");
+			e.printStackTrace();
+		}finally {
+			if(sender!=null) {
+				sender.close();
+			}
+		}
+		
+		return response;
 	}
 
 }

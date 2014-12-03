@@ -39,6 +39,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 	private List<RFChannel> channels;
 	private PhysicalLayerInterfaceClient physicalClient;
 	private EnergyLevelStabilizer energyLevelStabilizer;
+	public final static int THREADS = 5;
 	
 	private class EnergyLevelStabilizer implements Runnable{
 
@@ -125,6 +126,8 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 				in = new ObjectInputStream(socket.getInputStream());
 				out = new ObjectOutputStream(socket.getOutputStream());
 			}
+			
+			
 
 			@Override
 			public void run() {
@@ -156,7 +159,11 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 			socket = new ServerSocket(0);
 			log.debug(new DeviceData(traceableDevice.getId(),"TCP Physical Node Socket("+socket.getLocalPort()+") opened."));
 			active = false;
-			requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+			requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(THREADS);
+		}
+		
+		public boolean isBusy() {
+			return requestExecutor.getActiveCount()>=5;
 		}
 
 		@Override
@@ -196,7 +203,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 	public PhysicalLayerNode(Beacon traceableDevice, DeviceLog log) throws IOException {
 		this.traceableDevice = traceableDevice;
 		isListening = false;
-		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(THREADS);
 		this.log = log;
 		physicalClient = new PhysicalLayerInterfaceClient(traceableDevice,log);
 		
@@ -230,10 +237,12 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 	@Override
 	public PhysicalLayerResponse requestPhysicalLayerNode(
 			PhysicalLayerRequest request) {
-		log.info(new DeviceData(traceableDevice.getId(),
-				"Request ID ('" + request.getId()
-						+ "'), Device ("+request.getDevice().getId()+") is requesting a Physical Layer Node"));
+
 		PhysicalLayerResponse response = new PhysicalLayerResponse();
+		if(tcpPhysicalRequestConnection.isBusy()) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			return response;
+		}
 		response.setConfirm(CONFIRM.SUCCESS);
 		StringBuilder builder = new StringBuilder();
 		ServerSocket socket = tcpPhysicalRequestConnection.getSocket();
@@ -245,9 +254,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 		builder.append(":");
 		builder.append(socket.getLocalPort());
 		response.setMessage(builder.toString());
-		log.info(new DeviceData(traceableDevice.getId(),
-				"Request ID ('" + request.getId()
-						+ "'), available Physical Node"));
+
 		return response;
 	}
 

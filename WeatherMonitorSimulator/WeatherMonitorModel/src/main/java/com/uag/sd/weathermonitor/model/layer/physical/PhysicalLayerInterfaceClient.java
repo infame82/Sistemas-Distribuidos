@@ -58,23 +58,21 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 			DatagramPacket packet = new DatagramPacket(requestContent,
 					requestContent.length, group, PHYSICAL_LAYER_PORT);
 			mainLoop: while (!availableNode) {
-				log.debug(new DeviceData(device.getId(),
-						request.getId()+": Requesting physical layer node (" + counter + ")"));
+
 				socket.send(packet);
 				socket.setSoTimeout(REQUEST_TIME_OUT);
 				DatagramPacket reply = null;
 				try {
-					//while (true) {
+					while (true) {
 						reply = new DatagramPacket(new byte[BUFFER_SIZE],
 								BUFFER_SIZE);
 						socket.receive(reply);
 						response = (PhysicalLayerResponse) ObjectSerializer
 								.unserialize(reply.getData());
-						availableNode = response.getConfirm() == CONFIRM.SUCCESS;
-						if (availableNode) {
+						if (response.getConfirm() == CONFIRM.SUCCESS) {
 							break mainLoop;
 						}
-				//	}
+					}
 				} catch (SocketTimeoutException ste) {
 					log.debug(new DeviceData(device.getId(),
 							"Physical layer node not available (" + counter + ")"));
@@ -97,10 +95,7 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 				socket.close();
 			}
 		}
-		if (availableNode) {
-			log.debug(new DeviceData(device.getId(),
-					"Available Physical layer node: " + response.getMessage()));
-		}
+
 		return response;
 	}
 	

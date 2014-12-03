@@ -37,6 +37,8 @@ import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
 
 public class MacLayerNode implements Runnable, MacLayerInterface {
+	
+	public final static int THREADS = 5;
 
 	private DeviceLog log;
 	private Beacon traceableDevice;
@@ -178,6 +180,8 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 			}
 
 		}
+		
+		
 
 		public TcpMacRequestConnection() throws IOException {
 			socket = new ServerSocket(0);
@@ -186,7 +190,7 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 							+ ") opened."));
 			active = false;
 			requestExecutor = (ThreadPoolExecutor) Executors
-					.newFixedThreadPool(10);
+					.newFixedThreadPool(THREADS);
 		}
 
 		@Override
@@ -221,6 +225,10 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		public ServerSocket getSocket() {
 			return socket;
 		}
+		
+		public boolean isBusy() {
+			return requestExecutor.getActiveCount()>=5;
+		}
 
 	}
 
@@ -228,10 +236,10 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		this.traceableDevice = traceableDevice;
 		this.log = log;
 		active = false;
-		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+		requestExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(THREADS);
 		physicalClient = new PhysicalLayerInterfaceClient(traceableDevice,log);
 		macClient = new MacLayerInterfaceClient(traceableDevice, log);
-		networkInterfaceClient = new NerworkLayerInterfaceClient(traceableDevice,log);
+		networkInterfaceClient = new NerworkLayerInterfaceClient(traceableDevice,log); 
 		
 				
 	}
@@ -332,11 +340,12 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 
 	@Override
 	public synchronized MacLayerResponse requestMacLayerNode(MacLayerRequest request) {
-		log.info(new DeviceData(traceableDevice.getId(), "Request ID ('"
-				+ request.getId() + "'), Device ("
-				+ request.getDevice().getId()
-				+ ") is requesting a MAC Layer Node"));
 		MacLayerResponse response = new MacLayerResponse();
+		if(tcpMacConnection.isBusy()) {
+			response.setConfirm(CONFIRM.INVALID_REQUEST);
+			return response;
+		}
+		
 		response.setConfirm(CONFIRM.SUCCESS);
 		StringBuilder builder = new StringBuilder();
 		ServerSocket socket = tcpMacConnection.getSocket();
@@ -348,8 +357,6 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		builder.append(":");
 		builder.append(socket.getLocalPort());
 		response.setMessage(builder.toString());
-		log.info(new DeviceData(traceableDevice.getId(), "Request ID ('"
-				+ request.getId() + "'), available MAC Node"));
 		return response;
 	}
 
@@ -474,9 +481,8 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		if(networkDevices == null) {
 			networkDevices = new ArrayList<Beacon>();
 		}
-		networkDevices.add(request.getDevice());
-		
-		registeredDevices.put(deviceNwId, networkDevices);
+		registerDevice(request);
+		//registeredDevices.put(deviceNwId, networkDevices);
 		registeredNetworks.put(request.getChannel(), networks);
 		return response;
 	}
@@ -553,7 +559,15 @@ public class MacLayerNode implements Runnable, MacLayerInterface {
 		if(networkDevices == null) {
 			networkDevices = new ArrayList<Beacon>();
 		}
-		networkDevices.add(request.getDevice());
+		boolean add = true;
+		for(Beacon registered:networkDevices) {
+			if(registered.getId().equals(request.getDevice().getId())) {
+				add=false;
+			}
+		}
+		if(add) {
+			networkDevices.add(request.getDevice());
+		}
 		log.debug(new DeviceData(traceableDevice.getId(),"Registering neighbord "+request.getDevice().getId()+", "+request.getDevice().getIP()+":"+request.getDevice().getPort()));
 		registeredDevices.put(deviceNwId, networkDevices);
 		return response;

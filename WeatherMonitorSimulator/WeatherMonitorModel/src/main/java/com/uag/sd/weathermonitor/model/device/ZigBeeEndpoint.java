@@ -119,8 +119,9 @@ public class ZigBeeEndpoint extends Device implements SensorMonitor {
 		if (!active) {
 			return;
 		}
-		NetworlLayerRequest request = new NetworlLayerRequest();
 		
+		
+		NetworlLayerRequest request = new NetworlLayerRequest();
 		List<Beacon> parents = new ArrayList<Beacon>();
 		if(!neighbors.get(TYPE.COORDINATOR).isEmpty()) {
 			parents.addAll(neighbors.get(TYPE.COORDINATOR));
@@ -128,12 +129,12 @@ public class ZigBeeEndpoint extends Device implements SensorMonitor {
 			parents.addAll(neighbors.get(TYPE.ROUTER));
 		}
 		request.setDevice(this);
-		request.setData(data);
+		DataMessage msg = new DataMessage();
+		msg.setData(data);
+		msg.setBeacon(this);
+		request.setData(msg);
 		request.setAssociateBeacons(parents);
 		networkInterfaceClient.transmitData(request);
-		/*if (sensorLog != null) {
-			sensorLog.info(data);
-		}*/
 	}
 
 	public boolean equals(Object o) {

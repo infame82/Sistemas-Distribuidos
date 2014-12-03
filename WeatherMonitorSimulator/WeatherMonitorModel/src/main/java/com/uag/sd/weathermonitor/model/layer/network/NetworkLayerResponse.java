@@ -14,7 +14,7 @@ public class NetworkLayerResponse implements Serializable{
 	 */
 	private static final long serialVersionUID = 5958884861229323221L;
 	
-	public enum CONFIRM{INVALID_REQUEST,SUCCESS,STARTUP_FAILURE};
+	public enum CONFIRM{INVALID_REQUEST,SUCCESS,STARTUP_FAILURE,EXPIRED};
 	
 	
 	private CONFIRM confirm;

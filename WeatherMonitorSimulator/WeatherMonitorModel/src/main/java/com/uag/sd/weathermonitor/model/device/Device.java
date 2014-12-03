@@ -57,10 +57,11 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 	private transient ThreadPoolExecutor layerPoolExecutor;
 	
 	protected transient ThreadPoolExecutor executorService;
+	protected List<String> msgHistory;
 
 	
 	private transient DatagramSocket listener;
-	public static final int BUFFER_SIZE = 1536;
+	public static final int BUFFER_SIZE = 2048;
 	//public static final int DATA_BUFFER_SIZE = 2048;
 	
 	public class RequestResolver implements Runnable{
@@ -94,7 +95,13 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 						}
 					}
 				}else if(obj instanceof DataMessage){
-					execute((DataMessage)obj);
+					DataMessage msg = (DataMessage)obj;
+					String keyString = msg.getBeacon().getId()+":"+msg.getId();
+					if(!msgHistory.contains(keyString)) {
+						execute(msg);
+						msgHistory.add(keyString);
+					}
+					
 				}
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
@@ -122,6 +129,7 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 		started = false;
 		potency = 5;
 		location = new Point();
+		msgHistory = new ArrayList<String>();
 		neighbors = new HashMap<Device.TYPE, List<Beacon>>();
 		neighbors.put(TYPE.COORDINATOR, new ArrayList<Beacon>());
 		neighbors.put(TYPE.ROUTER, new ArrayList<Beacon>());
@@ -134,31 +142,36 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 		macLayerNode = new MacLayerNode(this,log);
 		networkLayerNode = new NetworkLayerNode(this,log);
 		
-		layerPoolExecutor.execute(physicalNode);
-		layerPoolExecutor.execute(macLayerNode);
-		layerPoolExecutor.execute(networkLayerNode);
+		
+		
+		networkInterfaceClient = new NerworkLayerInterfaceClient(this,log);
+		ipAddress =   InetAddress.getLocalHost().getHostAddress();
+		listener = new DatagramSocket();
+		listenerPort = listener.getLocalPort();
 		
 		physicalNode.init();
 		macLayerNode.init();
 		networkLayerNode.init();
 		
-		networkInterfaceClient = new NerworkLayerInterfaceClient(this,log);
+		layerPoolExecutor.execute(physicalNode);
+		layerPoolExecutor.execute(macLayerNode);
+		layerPoolExecutor.execute(networkLayerNode);
+		
 		
 		
 	}
 	
 	protected int listenerPort;
 	protected String ipAddress;
-	
+
 	@Override
 	public void run() {
+		
+		
 		active = true;
 		log.debug(new DeviceData(id, "STARTED"));
 		DatagramPacket request = null;
 		try {
-			listener = new DatagramSocket();
-			listenerPort = listener.getLocalPort();
-			ipAddress = InetAddress.getLocalHost().getHostAddress();
 			log.info(new DeviceData(this.id, "Device Listening on: "+ipAddress+":"+listenerPort));
 			init();
 			while (active) {
@@ -220,7 +233,7 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 		NetworlLayerRequest request = new NetworlLayerRequest(PRIMITIVE.NETWORK_JOIN,this);
 		request.setJoinBeacon(beacon);
 		request.setChannel(channel);
-		NetworkLayerResponse response = networkInterfaceClient.netoworkJoin(request);
+		NetworkLayerResponse response = networkInterfaceClient.networkJoin(request);
 		if(response.getConfirm() == CONFIRM.INVALID_REQUEST) {
 			log.debug(new DeviceData(id,response.getMessage()));
 			return false;

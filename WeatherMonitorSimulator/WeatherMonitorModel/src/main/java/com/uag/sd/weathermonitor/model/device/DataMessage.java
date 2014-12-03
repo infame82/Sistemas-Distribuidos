@@ -2,8 +2,6 @@ package com.uag.sd.weathermonitor.model.device;
 
 import java.io.Serializable;
 
-import com.uag.sd.weathermonitor.model.device.DeviceData.SENSOR_TYPE;
-
 public class DataMessage implements Serializable {
 
 	/**
@@ -16,8 +14,8 @@ public class DataMessage implements Serializable {
 	private Beacon beacon;
 	private int id;
 	private int expiration;
-	private String data;
-	private SENSOR_TYPE type;
+	private DeviceData data;
+
 
 	public Beacon getBeacon() {
 		return beacon;
@@ -37,18 +35,13 @@ public class DataMessage implements Serializable {
 	public void setExpiration(int expiration) {
 		this.expiration = expiration;
 	}
-	public String getData() {
+	public DeviceData getData() {
 		return data;
 	}
-	public void setData(String data) {
+	public void setData(DeviceData data) {
 		this.data = data;
 	}
-	public SENSOR_TYPE getType() {
-		return type;
-	}
-	public void setType(SENSOR_TYPE type) {
-		this.type = type;
-	}
+	
 	
 	
 	
