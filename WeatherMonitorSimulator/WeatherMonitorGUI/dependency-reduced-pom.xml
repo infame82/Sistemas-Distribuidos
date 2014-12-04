@@ -43,7 +43,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>com.uag.sd.weathermonitor.gui.Main</mainClass>
+                  <mainClass>Main</mainClass>
                 </transformer>
               </transformers>
             </configuration>

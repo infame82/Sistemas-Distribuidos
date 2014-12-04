@@ -47,6 +47,7 @@ public abstract class Sensor implements Runnable{
 				DeviceData data = new DeviceData(id, detect());
 				data.setType(getType());
 				monitor.notify(data);
+				log.info(data);
 			}
 			try {
 				Thread.sleep(lapse);

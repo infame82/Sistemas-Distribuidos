@@ -269,9 +269,9 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			if (isListening) {
 				log.debug(new DeviceData(traceableDevice.getId(), e1
 						.getMessage()));
-				
+				e1.printStackTrace();
 			}
-			e1.printStackTrace();
+			
 		} finally {
 			log.debug(new DeviceData(traceableDevice.getId(),
 					"Network Layer Node stopped on " + NETWORK_LAYER_ADDRESS
@@ -346,6 +346,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 			response.setMessage("Unable to start a network");
 			return response;
 		}
+		response.setBeacon(device);
 		response.setConfirm(CONFIRM.SUCCESS);
 		return response;
 	}

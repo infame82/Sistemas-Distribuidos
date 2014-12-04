@@ -55,13 +55,13 @@ public class EndpointTableModel extends AbstractTableModel{
 		return null;
 	}
 	
-	public void addEndpoint(ZigBeeEndpoint zigBeeEndpoint) {
+	public void add(ZigBeeEndpoint zigBeeEndpoint) {
 		int rowCount = zigBeeEndpoints.size();
 		zigBeeEndpoints.add(zigBeeEndpoint);
 		fireTableRowsInserted(rowCount, rowCount);
 	}
 	
-	public ZigBeeEndpoint getEndpoint(int rowIndex) {
+	public ZigBeeEndpoint get(int rowIndex) {
 		return zigBeeEndpoints.get(rowIndex);
 	}
 	
@@ -76,12 +76,12 @@ public class EndpointTableModel extends AbstractTableModel{
 		return index;
 	}
 	
-	public ZigBeeEndpoint removeEndpoint(int rowIndex) {
+	public ZigBeeEndpoint remove(int rowIndex) {
 		fireTableRowsDeleted(rowIndex, rowIndex);
 		return zigBeeEndpoints.remove(rowIndex);
 	}
 	
-	public void startAllEnpoints() {
+	public void startAll() {
 		for(ZigBeeEndpoint zigBeeEndpoint:zigBeeEndpoints) {
 			if(!zigBeeEndpoint.isActive()) {
 				service.execute(zigBeeEndpoint);
@@ -90,11 +90,11 @@ public class EndpointTableModel extends AbstractTableModel{
 		fireTableDataChanged();
 	}
 	
-	public void startEndpoint(ZigBeeEndpoint zigBeeEndpoint) {
+	public void start(ZigBeeEndpoint zigBeeEndpoint) {
 		service.execute(zigBeeEndpoint);
 	}
 	
-	public void stopAllEndpoints() {
+	public void stopAll() {
 		for(ZigBeeEndpoint zigBeeEndpoint:zigBeeEndpoints) {
 			if(zigBeeEndpoint.isActive()) {
 				zigBeeEndpoint.stop();

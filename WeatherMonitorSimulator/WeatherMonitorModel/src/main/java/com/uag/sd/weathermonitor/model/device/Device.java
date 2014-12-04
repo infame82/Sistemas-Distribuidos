@@ -149,13 +149,7 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 		listener = new DatagramSocket();
 		listenerPort = listener.getLocalPort();
 		
-		physicalNode.init();
-		macLayerNode.init();
-		networkLayerNode.init();
 		
-		layerPoolExecutor.execute(physicalNode);
-		layerPoolExecutor.execute(macLayerNode);
-		layerPoolExecutor.execute(networkLayerNode);
 		
 		
 		
@@ -166,7 +160,13 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 
 	@Override
 	public void run() {
+		physicalNode.init();
+		macLayerNode.init();
+		networkLayerNode.init();
 		
+		layerPoolExecutor.execute(physicalNode);
+		layerPoolExecutor.execute(macLayerNode);
+		layerPoolExecutor.execute(networkLayerNode);
 		
 		active = true;
 		log.debug(new DeviceData(id, "STARTED"));
@@ -215,6 +215,8 @@ public abstract class Device implements Serializable,Runnable,Beacon{
 			log.debug(new DeviceData(id,response.getMessage()));
 			return false;
 		}
+		panID = response.getBeacon().getPanId();
+		extendedPanID = response.getBeacon().getExtendedPanID();
 		setStarted(true);
 		return true;
 	}

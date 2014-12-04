@@ -22,70 +22,46 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-import com.uag.sd.weathermonitor.gui.models.EndpointTableModel;
+import com.uag.sd.weathermonitor.gui.models.RouterTableModel;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
+import com.uag.sd.weathermonitor.model.device.ZigBeeRouter;
 
-public class EndpointDialogGUI extends JDialog {
+public class RouterDialogGUI extends JDialog {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -6684257466299046068L;
+	private static final long serialVersionUID = 5040213720605514085L;
 	private final JPanel contentPanel = new JPanel();
 	private JTextField idField;
 	private JSpinner coverageField;
 	private JSpinner positionXField;
 	private JSpinner positionYField;
-	private JCheckBox activeBox;
-	private ZigBeeEndpoint zigBeeEndpoint;
-	private EndpointTableModel tableModel;
-	private DeviceLog sensorLog;
+	private ZigBeeRouter router;
+	private RouterTableModel tableModel;
 	private DeviceLog deviceLog;
+	private JCheckBox activeBox;
 
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
 		try {
-			EndpointDialogGUI dialog = new EndpointDialogGUI();
+			RouterDialogGUI dialog = new RouterDialogGUI();
+			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public EndpointDialogGUI(ZigBeeEndpoint zigBeeEndpoint,EndpointTableModel tableModel,DeviceLog sensorLog,DeviceLog deviceLog) {
-		this();
-		this.zigBeeEndpoint = zigBeeEndpoint;
-		this.tableModel = tableModel;
-		this.sensorLog = sensorLog;
-		this.deviceLog = deviceLog;
-		if(zigBeeEndpoint!=null) {
-			idField.setText(zigBeeEndpoint.getId());
-			idField.setEnabled(false);
-			coverageField.getModel().setValue(zigBeeEndpoint.getPotency());
-			positionXField.getModel().setValue( new Double(zigBeeEndpoint.getLocation().getX()).intValue());
-			positionYField.getModel().setValue( new Double(zigBeeEndpoint.getLocation().getY()).intValue());
-			activeBox.setSelected(zigBeeEndpoint.isActive());
-		}
-	}
-	
-	public void reset() {
-		idField.setText("");
-		coverageField.getModel().setValue(1);
-		positionXField.getModel().setValue(0);
-		positionYField.getModel().setValue(0);
-		activeBox.setSelected(false);
-	}
-
 	/**
 	 * Create the dialog.
 	 */
-	public EndpointDialogGUI() {
+	public RouterDialogGUI() {
+		setTitle("Router");
 		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		setType(Type.POPUP);
-		setModal(true);
 		setResizable(false);
 		setAlwaysOnTop(true);
 		setBounds(100, 100, 222, 274);
@@ -230,40 +206,39 @@ public class EndpointDialogGUI extends JDialog {
 					public void actionPerformed(ActionEvent e) {
 						boolean isNew = false;
 						
-						if(zigBeeEndpoint==null) {
+						if(router==null) {
 							try {
-								zigBeeEndpoint = new ZigBeeEndpoint(idField.getText(),sensorLog,deviceLog);
+								router = new ZigBeeRouter(idField.getText(),deviceLog);
 							} catch ( IOException e1) {
-								JOptionPane.showMessageDialog(EndpointDialogGUI.this, e1.getMessage());
+								JOptionPane.showMessageDialog(RouterDialogGUI.this, e1.getMessage());
 								return;
 							}
-							zigBeeEndpoint.setSensorLog(sensorLog);
 							isNew = true;
 							
 						}
-						boolean prevState = zigBeeEndpoint.isActive();
-						zigBeeEndpoint.setId(idField.getText());
-						zigBeeEndpoint.setPotency((int)coverageField.getModel().getValue());
-						zigBeeEndpoint.setLocation((int)positionXField.getModel().getValue(),
+						boolean prevState = router.isActive();
+						router.setId(idField.getText());
+						router.setPotency((int)coverageField.getModel().getValue());
+						router.setLocation((int)positionXField.getModel().getValue(),
 								(int)positionYField.getModel().getValue());
-						zigBeeEndpoint.setActive(activeBox.isSelected());
+						router.setActive(activeBox.isSelected());
 						if(isNew) {
-							tableModel.add(zigBeeEndpoint);
-							if(zigBeeEndpoint.isActive()) {
-								tableModel.start(zigBeeEndpoint);
+							tableModel.add(router);
+							if(router.isActive()) {
+								tableModel.start(router);
 							}
 						}else {
-							if(prevState != zigBeeEndpoint.isActive()) {
-								if(zigBeeEndpoint.isActive()) {
-									tableModel.start(zigBeeEndpoint);
+							if(prevState != router.isActive()) {
+								if(router.isActive()) {
+									tableModel.start(router);
 								}else {
-									zigBeeEndpoint.stop();
+									router.stop();
 								}
 							}
-							int rowIndex = tableModel.getIndexOf(zigBeeEndpoint);
+							int rowIndex = tableModel.getIndexOf(router);
 							tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
 						}
-						EndpointDialogGUI.this.dispose();
+						RouterDialogGUI.this.dispose();
 					}
 				});
 				okButton.setActionCommand("OK");
@@ -274,13 +249,36 @@ public class EndpointDialogGUI extends JDialog {
 				JButton cancelButton = new JButton("Cancel");
 				cancelButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						EndpointDialogGUI.this.dispose();
+						RouterDialogGUI.this.dispose();
 					}
 				});
 				cancelButton.setActionCommand("Cancel");
 				buttonPane.add(cancelButton);
 			}
 		}
-
 	}
+	
+	public RouterDialogGUI(ZigBeeRouter router,RouterTableModel tableModel,DeviceLog deviceLog) {
+		this();
+		this.router = router;
+		this.tableModel = tableModel;
+		this.deviceLog = deviceLog;
+		if(router!=null) {
+			idField.setText(router.getId());
+			idField.setEnabled(false);
+			coverageField.getModel().setValue(router.getPotency());
+			positionXField.getModel().setValue( new Double(router.getLocation().getX()).intValue());
+			positionYField.getModel().setValue( new Double(router.getLocation().getY()).intValue());
+			activeBox.setSelected(router.isActive());
+		}
+	}
+	
+	public void reset() {
+		idField.setText("");
+		coverageField.getModel().setValue(1);
+		positionXField.getModel().setValue(0);
+		positionYField.getModel().setValue(0);
+		activeBox.setSelected(false);
+	}
+
 }

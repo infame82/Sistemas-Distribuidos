@@ -16,13 +16,13 @@ public class RouterTableModel extends AbstractTableModel{
 	 */
 	private static final long serialVersionUID = 2810225090066450282L;
 	private List<ZigBeeRouter> zigBeeRouters;
-	private String[] columnNames = { "ID", "Location", "Coverage",
+	private String[] columnNames = { "ID","PANID","ExtendedPANID", "Location", "Coverage",
     "Status" };
 	private ThreadPoolExecutor service;
 	
 	public RouterTableModel() {
 		zigBeeRouters = new ArrayList<ZigBeeRouter>();
-		service = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+		service = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
 	}
 
 	@Override
@@ -47,22 +47,26 @@ public class RouterTableModel extends AbstractTableModel{
 		case 0:
 			return zigBeeRouter.getId();
 		case 1:
-			return "X: "+zigBeeRouter.getLocation().getX()+", Y: "+zigBeeRouter.getLocation().getY();
+			return zigBeeRouter.getPanId();
 		case 2:
-			return zigBeeRouter.getPotency();
+			return zigBeeRouter.getExtendedPanID();
 		case 3:
+			return "X: "+zigBeeRouter.getLocation().getX()+", Y: "+zigBeeRouter.getLocation().getY();
+		case 4:
+			return zigBeeRouter.getPotency();
+		case 5:
 			return zigBeeRouter.isActive()?"Active":"Inactive";
 		}
 		return null;
 	}
 	
-	public void addRouter(ZigBeeRouter zigBeeRouter) {
+	public void add(ZigBeeRouter zigBeeRouter) {
 		int rowCount = zigBeeRouters.size();
 		zigBeeRouters.add(zigBeeRouter);
 		fireTableRowsInserted(rowCount, rowCount);
 	}
 	
-	public ZigBeeRouter getRouter(int rowIndex) {
+	public ZigBeeRouter get(int rowIndex) {
 		return zigBeeRouters.get(rowIndex);
 	}
 	
@@ -77,12 +81,12 @@ public class RouterTableModel extends AbstractTableModel{
 		return index;
 	}
 	
-	public ZigBeeRouter removeEndpoint(int rowIndex) {
+	public ZigBeeRouter remove(int rowIndex) {
 		fireTableRowsDeleted(rowIndex, rowIndex);
 		return zigBeeRouters.remove(rowIndex);
 	}
 	
-	public void startAllRouters() {
+	public void startAll() {
 		for(ZigBeeRouter zigBeeRouter:zigBeeRouters) {
 			if(!zigBeeRouter.isActive()) {
 				service.execute(zigBeeRouter);
@@ -91,11 +95,11 @@ public class RouterTableModel extends AbstractTableModel{
 		fireTableDataChanged();
 	}
 	
-	public void startRouter(ZigBeeRouter zigBeeRouter) {
+	public void start(ZigBeeRouter zigBeeRouter) {
 		service.execute(zigBeeRouter);
 	}
 	
-	public void stopAllRouters() {
+	public void stopAll() {
 		for(ZigBeeRouter zigBeeRouter:zigBeeRouters) {
 			if(zigBeeRouter.isActive()) {
 				zigBeeRouter.stop();

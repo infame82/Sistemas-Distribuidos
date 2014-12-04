@@ -22,70 +22,46 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-import com.uag.sd.weathermonitor.gui.models.EndpointTableModel;
+import com.uag.sd.weathermonitor.gui.models.CoordinatorTableModel;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.ZigBeeEndpoint;
+import com.uag.sd.weathermonitor.model.device.ZigBeeCoordinator;
 
-public class EndpointDialogGUI extends JDialog {
+public class CoordinatorDialogGUI extends JDialog {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -6684257466299046068L;
+	private static final long serialVersionUID = 3229426320105901026L;
 	private final JPanel contentPanel = new JPanel();
 	private JTextField idField;
 	private JSpinner coverageField;
 	private JSpinner positionXField;
 	private JSpinner positionYField;
-	private JCheckBox activeBox;
-	private ZigBeeEndpoint zigBeeEndpoint;
-	private EndpointTableModel tableModel;
-	private DeviceLog sensorLog;
+	private ZigBeeCoordinator coordinator;
+	private CoordinatorTableModel tableModel;
 	private DeviceLog deviceLog;
+	private JCheckBox activeBox;
 
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
 		try {
-			EndpointDialogGUI dialog = new EndpointDialogGUI();
+			CoordinatorDialogGUI dialog = new CoordinatorDialogGUI();
+			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public EndpointDialogGUI(ZigBeeEndpoint zigBeeEndpoint,EndpointTableModel tableModel,DeviceLog sensorLog,DeviceLog deviceLog) {
-		this();
-		this.zigBeeEndpoint = zigBeeEndpoint;
-		this.tableModel = tableModel;
-		this.sensorLog = sensorLog;
-		this.deviceLog = deviceLog;
-		if(zigBeeEndpoint!=null) {
-			idField.setText(zigBeeEndpoint.getId());
-			idField.setEnabled(false);
-			coverageField.getModel().setValue(zigBeeEndpoint.getPotency());
-			positionXField.getModel().setValue( new Double(zigBeeEndpoint.getLocation().getX()).intValue());
-			positionYField.getModel().setValue( new Double(zigBeeEndpoint.getLocation().getY()).intValue());
-			activeBox.setSelected(zigBeeEndpoint.isActive());
-		}
-	}
-	
-	public void reset() {
-		idField.setText("");
-		coverageField.getModel().setValue(1);
-		positionXField.getModel().setValue(0);
-		positionYField.getModel().setValue(0);
-		activeBox.setSelected(false);
-	}
-
 	/**
 	 * Create the dialog.
 	 */
-	public EndpointDialogGUI() {
+	public CoordinatorDialogGUI() {
+		setTitle("Coordinator");
 		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		setType(Type.POPUP);
-		setModal(true);
 		setResizable(false);
 		setAlwaysOnTop(true);
 		setBounds(100, 100, 222, 274);
@@ -230,40 +206,39 @@ public class EndpointDialogGUI extends JDialog {
 					public void actionPerformed(ActionEvent e) {
 						boolean isNew = false;
 						
-						if(zigBeeEndpoint==null) {
+						if(coordinator==null) {
 							try {
-								zigBeeEndpoint = new ZigBeeEndpoint(idField.getText(),sensorLog,deviceLog);
+								coordinator = new ZigBeeCoordinator(idField.getText(),deviceLog);
 							} catch ( IOException e1) {
-								JOptionPane.showMessageDialog(EndpointDialogGUI.this, e1.getMessage());
+								JOptionPane.showMessageDialog(CoordinatorDialogGUI.this, e1.getMessage());
 								return;
 							}
-							zigBeeEndpoint.setSensorLog(sensorLog);
 							isNew = true;
 							
 						}
-						boolean prevState = zigBeeEndpoint.isActive();
-						zigBeeEndpoint.setId(idField.getText());
-						zigBeeEndpoint.setPotency((int)coverageField.getModel().getValue());
-						zigBeeEndpoint.setLocation((int)positionXField.getModel().getValue(),
+						boolean prevState = coordinator.isActive();
+						coordinator.setId(idField.getText());
+						coordinator.setPotency((int)coverageField.getModel().getValue());
+						coordinator.setLocation((int)positionXField.getModel().getValue(),
 								(int)positionYField.getModel().getValue());
-						zigBeeEndpoint.setActive(activeBox.isSelected());
+						coordinator.setActive(activeBox.isSelected());
 						if(isNew) {
-							tableModel.add(zigBeeEndpoint);
-							if(zigBeeEndpoint.isActive()) {
-								tableModel.start(zigBeeEndpoint);
+							tableModel.add(coordinator);
+							if(coordinator.isActive()) {
+								tableModel.start(coordinator);
 							}
 						}else {
-							if(prevState != zigBeeEndpoint.isActive()) {
-								if(zigBeeEndpoint.isActive()) {
-									tableModel.start(zigBeeEndpoint);
+							if(prevState != coordinator.isActive()) {
+								if(coordinator.isActive()) {
+									tableModel.start(coordinator);
 								}else {
-									zigBeeEndpoint.stop();
+									coordinator.stop();
 								}
 							}
-							int rowIndex = tableModel.getIndexOf(zigBeeEndpoint);
+							int rowIndex = tableModel.getIndexOf(coordinator);
 							tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
 						}
-						EndpointDialogGUI.this.dispose();
+						CoordinatorDialogGUI.this.dispose();
 					}
 				});
 				okButton.setActionCommand("OK");
@@ -274,13 +249,36 @@ public class EndpointDialogGUI extends JDialog {
 				JButton cancelButton = new JButton("Cancel");
 				cancelButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						EndpointDialogGUI.this.dispose();
+						CoordinatorDialogGUI.this.dispose();
 					}
 				});
 				cancelButton.setActionCommand("Cancel");
 				buttonPane.add(cancelButton);
 			}
 		}
-
 	}
+	
+	public CoordinatorDialogGUI(ZigBeeCoordinator coordinator,CoordinatorTableModel tableModel,DeviceLog deviceLog) {
+		this();
+		this.coordinator = coordinator;
+		this.tableModel = tableModel;
+		this.deviceLog = deviceLog;
+		if(coordinator!=null) {
+			idField.setText(coordinator.getId());
+			idField.setEnabled(false);
+			coverageField.getModel().setValue(coordinator.getPotency());
+			positionXField.getModel().setValue( new Double(coordinator.getLocation().getX()).intValue());
+			positionYField.getModel().setValue( new Double(coordinator.getLocation().getY()).intValue());
+			activeBox.setSelected(coordinator.isActive());
+		}
+	}
+	
+	public void reset() {
+		idField.setText("");
+		coverageField.getModel().setValue(1);
+		positionXField.getModel().setValue(0);
+		positionYField.getModel().setValue(0);
+		activeBox.setSelected(false);
+	}
+
 }

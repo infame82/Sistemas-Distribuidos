@@ -181,6 +181,7 @@ public class SensorDialogGUI extends JDialog {
 							zigBeeEndpoint.addSensor(sensor);
 							sensorTableModel.fireTableRowsInserted(rowCount, rowCount);
 							if(sensor.isActive()) {
+								sensor.setActive(false);
 								zigBeeEndpoint.startSensor(sensor);
 							}
 						}else {

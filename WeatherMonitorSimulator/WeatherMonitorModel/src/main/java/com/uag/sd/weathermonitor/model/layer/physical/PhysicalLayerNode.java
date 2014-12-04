@@ -298,10 +298,14 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 		log.debug(new DeviceData(traceableDevice.getId(),
 				"Stopping Physical Layer Node on " + PHYSICAL_LAYER_ADDRESS + ":"
 						+ PHYSICAL_LAYER_PORT));
-		tcpPhysicalRequestConnection.stop();
+		if(tcpPhysicalRequestConnection!=null) {
+			tcpPhysicalRequestConnection.stop();
+		}
 		requestExecutor.shutdownNow();
 		isListening = false;
-		socket.close();
+		if(socket!=null) {
+			socket.close();
+		}
 	}
 
 	@Override
