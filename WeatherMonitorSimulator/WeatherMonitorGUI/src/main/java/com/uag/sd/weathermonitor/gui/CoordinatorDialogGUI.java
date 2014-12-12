@@ -5,6 +5,8 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -41,6 +43,7 @@ public class CoordinatorDialogGUI extends JDialog {
 	private CoordinatorTableModel tableModel;
 	private DeviceLog deviceLog;
 	private JCheckBox activeBox;
+	private JTextField msgBrokerIPField;
 
 	/**
 	 * Launch the application.
@@ -64,7 +67,7 @@ public class CoordinatorDialogGUI extends JDialog {
 		setType(Type.POPUP);
 		setResizable(false);
 		setAlwaysOnTop(true);
-		setBounds(100, 100, 222, 274);
+		setBounds(100, 100, 252, 335);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -85,6 +88,12 @@ public class CoordinatorDialogGUI extends JDialog {
 				TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		
 		activeBox = new JCheckBox("Active");
+		activeBox.setSelected(true);
+		
+		JLabel lblNewLabel = new JLabel("Msg. Broker IP:");
+		
+		msgBrokerIPField = new JTextField();
+		msgBrokerIPField.setColumns(10);
 		GroupLayout gl_contentPanel = new GroupLayout(contentPanel);
 		gl_contentPanel.setHorizontalGroup(
 			gl_contentPanel.createParallelGroup(Alignment.TRAILING)
@@ -93,19 +102,24 @@ public class CoordinatorDialogGUI extends JDialog {
 					.addGroup(gl_contentPanel.createParallelGroup(Alignment.LEADING)
 						.addGroup(gl_contentPanel.createSequentialGroup()
 							.addGroup(gl_contentPanel.createParallelGroup(Alignment.LEADING)
-								.addGroup(gl_contentPanel.createSequentialGroup()
-									.addGroup(gl_contentPanel.createParallelGroup(Alignment.LEADING)
-										.addComponent(lblCoverage)
-										.addComponent(lblId))
-									.addPreferredGap(ComponentPlacement.RELATED)
-									.addGroup(gl_contentPanel.createParallelGroup(Alignment.LEADING)
-										.addComponent(idField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-										.addComponent(coverageField, GroupLayout.DEFAULT_SIZE, 134, Short.MAX_VALUE)))
-								.addComponent(locationPanel, GroupLayout.DEFAULT_SIZE, 202, Short.MAX_VALUE))
+								.addComponent(lblCoverage)
+								.addComponent(lblId))
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addGroup(gl_contentPanel.createParallelGroup(Alignment.LEADING)
+								.addComponent(idField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+								.addComponent(coverageField, GroupLayout.DEFAULT_SIZE, 134, Short.MAX_VALUE))
 							.addGap(248))
 						.addGroup(gl_contentPanel.createSequentialGroup()
 							.addComponent(activeBox)
-							.addContainerGap(135, Short.MAX_VALUE))))
+							.addContainerGap(135, Short.MAX_VALUE))
+						.addGroup(gl_contentPanel.createSequentialGroup()
+							.addGroup(gl_contentPanel.createParallelGroup(Alignment.TRAILING, false)
+								.addComponent(locationPanel, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addGroup(Alignment.LEADING, gl_contentPanel.createSequentialGroup()
+									.addComponent(lblNewLabel)
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addComponent(msgBrokerIPField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+							.addContainerGap(32, Short.MAX_VALUE))))
 		);
 		gl_contentPanel.setVerticalGroup(
 			gl_contentPanel.createParallelGroup(Alignment.LEADING)
@@ -121,8 +135,12 @@ public class CoordinatorDialogGUI extends JDialog {
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addComponent(locationPanel, GroupLayout.PREFERRED_SIZE, 94, GroupLayout.PREFERRED_SIZE)
 					.addPreferredGap(ComponentPlacement.RELATED)
+					.addGroup(gl_contentPanel.createParallelGroup(Alignment.BASELINE)
+						.addComponent(lblNewLabel)
+						.addComponent(msgBrokerIPField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+					.addPreferredGap(ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
 					.addComponent(activeBox)
-					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+					.addContainerGap())
 		);
 
 		JLabel lblX = new JLabel("X:");
@@ -208,9 +226,13 @@ public class CoordinatorDialogGUI extends JDialog {
 						
 						if(coordinator==null) {
 							try {
-								coordinator = new ZigBeeCoordinator(idField.getText(),deviceLog);
-							} catch ( IOException e1) {
-								JOptionPane.showMessageDialog(CoordinatorDialogGUI.this, e1.getMessage());
+								InetAddress.getByName(msgBrokerIPField.getText().trim());
+								coordinator = new ZigBeeCoordinator(idField.getText(),deviceLog,msgBrokerIPField.getText().trim());
+							} catch ( UnknownHostException e1) {
+								JOptionPane.showMessageDialog(null, "Invalid Msg. Broker IP: "+msgBrokerIPField.getText().trim());
+								return;
+							} catch (IOException e1) {
+								JOptionPane.showMessageDialog(null, e1.getMessage());
 								return;
 							}
 							isNew = true;
@@ -280,5 +302,4 @@ public class CoordinatorDialogGUI extends JDialog {
 		positionYField.getModel().setValue(0);
 		activeBox.setSelected(false);
 	}
-
 }

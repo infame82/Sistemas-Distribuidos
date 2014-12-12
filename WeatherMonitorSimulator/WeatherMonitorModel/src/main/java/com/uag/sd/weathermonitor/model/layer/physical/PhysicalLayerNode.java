@@ -15,12 +15,9 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import net.jini.core.entry.UnusableEntryException;
-import net.jini.core.transaction.TransactionException;
-
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel.RF_CHANNEL;
@@ -87,8 +84,7 @@ public class PhysicalLayerNode implements Runnable,PhysicalLayerInterface{
 		}
 
 		private void resolveRequest(PhysicalLayerRequest request)
-				throws IOException, UnusableEntryException,
-				TransactionException, InterruptedException {
+				throws IOException, InterruptedException {
 			PhysicalLayerResponse response = new PhysicalLayerResponse();
 			response.setConfirm(CONFIRM.INVALID_REQUEST);
 			response.setMessage("Invalid Primitive");

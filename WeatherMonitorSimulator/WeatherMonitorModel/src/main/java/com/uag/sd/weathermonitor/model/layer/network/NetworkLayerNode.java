@@ -19,9 +19,6 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import net.jini.core.entry.UnusableEntryException;
-import net.jini.core.transaction.TransactionException;
-
 import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.device.DataMessage;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
@@ -95,8 +92,7 @@ public class NetworkLayerNode implements Runnable, NetworkLayerInterface {
 		}
 
 		private void resolveRequest(NetworlLayerRequest request)
-				throws IOException, UnusableEntryException,
-				TransactionException, InterruptedException {
+				throws IOException, InterruptedException {
 			NetworkLayerResponse response = new NetworkLayerResponse();
 			response.setConfirm(CONFIRM.INVALID_REQUEST);
 			response.setMessage("Invalid Primitive");

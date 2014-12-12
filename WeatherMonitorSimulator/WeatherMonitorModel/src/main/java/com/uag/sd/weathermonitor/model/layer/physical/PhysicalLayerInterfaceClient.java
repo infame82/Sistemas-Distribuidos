@@ -6,14 +6,15 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
+import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.device.DeviceData;
 import com.uag.sd.weathermonitor.model.device.DeviceLog;
-import com.uag.sd.weathermonitor.model.device.Beacon;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerRequest.PRIMITIVE;
 import com.uag.sd.weathermonitor.model.layer.physical.PhysicalLayerResponse.CONFIRM;
 import com.uag.sd.weathermonitor.model.utils.ObjectSerializer;
@@ -54,6 +55,7 @@ public class PhysicalLayerInterfaceClient implements PhysicalLayerInterface{
 		DatagramSocket socket = null;
 		try {
 			socket = new DatagramSocket();
+			socket.setBroadcast(true);
 			byte[] requestContent = ObjectSerializer.serialize(request);
 			DatagramPacket packet = new DatagramPacket(requestContent,
 					requestContent.length, group, PHYSICAL_LAYER_PORT);

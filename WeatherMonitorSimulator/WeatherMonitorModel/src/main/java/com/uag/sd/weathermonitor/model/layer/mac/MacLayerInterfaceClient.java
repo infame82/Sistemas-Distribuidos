@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -52,6 +53,7 @@ public class MacLayerInterfaceClient implements MacLayerInterface {
 		DatagramSocket socket = null;
 		try {
 			socket = new DatagramSocket();
+			socket.setBroadcast(true);
 			byte[] requestContent = ObjectSerializer.serialize(request);
 			DatagramPacket packet = new DatagramPacket(requestContent,
 					requestContent.length, group, MAC_LAYER_PORT);

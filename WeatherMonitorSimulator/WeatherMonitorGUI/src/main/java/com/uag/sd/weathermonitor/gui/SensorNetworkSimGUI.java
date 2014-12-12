@@ -28,8 +28,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.text.DefaultCaret;
 
-import org.springframework.stereotype.Component;
-
 import com.uag.sd.weathermonitor.gui.models.CoordinatorTableModel;
 import com.uag.sd.weathermonitor.gui.models.EndpointRouterTableModel;
 import com.uag.sd.weathermonitor.gui.models.EndpointTableModel;
@@ -44,7 +42,7 @@ import com.uag.sd.weathermonitor.model.device.ZigBeeRouter;
 import com.uag.sd.weathermonitor.model.layer.physical.channel.RFChannel;
 import com.uag.sd.weathermonitor.model.sensor.Sensor;
 
-@Component("sensorNetworkSimulationGUI")
+
 public class SensorNetworkSimGUI {
 
 	class EndpointLog implements DeviceLog {

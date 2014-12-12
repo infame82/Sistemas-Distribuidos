@@ -88,7 +88,7 @@ public class TestEndpoint  extends AbstractTestNGSpringContextTests {
 	@Test
 	public void testEndpoint() throws InterruptedException, IOException {
 		
-		c1 = new ZigBeeCoordinator("Coordinator 00",  new DefaultDeviceLog());
+		c1 = new ZigBeeCoordinator("Coordinator 00",  new DefaultDeviceLog(),"localhost");
 		c1.setLocation(9, 2);
 		c1.setPotency(3);
 		
